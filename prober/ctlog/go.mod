@@ -1,4 +1,4 @@
-module github.com/sigstore/public-good-instance/prober/ctlog
+module github.com/sigstore/sigstore-probers/prober/ctlog
 
 go 1.19
 

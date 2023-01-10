@@ -1,4 +1,4 @@
-module github.com/sigstore/public-good-instance/pager-duty
+module github.com/sigstore/sigstore-probers/pager-duty
 
 go 1.18
 
