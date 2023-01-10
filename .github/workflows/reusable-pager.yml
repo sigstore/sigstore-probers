@@ -1,0 +1,95 @@
+name: 'PagerDuty: Trigger Alert'
+
+on:
+  workflow_call:
+    secrets:
+      PAGERDUTY_INTEGRATION_KEY:
+        description: 'Integration key for PagerDuty'
+        required: true
+    inputs:
+      retries:
+        description: 'The number of times to retry sending a page on an intermittent error (e.g. HTTP 429, 500 response codes); note exponential backoff is in use'
+        type: number
+        default: 4
+      summary:
+        description: 'A brief text summary of the event, used to generate the summaries/titles of any associated alerts. The maximum permitted length of this property is 1024 characters.'
+        default: 'unknown'
+        type: string
+      source:
+        description: 'The unique location of the affected system, preferably a hostname or FQDN.'
+        default: 'GitHub Actions Prober'
+        type: string
+      severity:
+        description: 'The perceived severity of the status the event is describing with respect to the affected system. This can be "critical", "error", "warning" or "info".'
+        default: 'error'
+        type: string
+      component:
+        description: 'Component of the infrastructure that is responsible for the event, for example "rekor" or "fulcio"'
+        required: true
+        type: string
+      group:
+        description: 'Logical grouping of components of a service, for example "production" or "staging"'
+        required: true
+        type: string
+      details:
+        description: 'Additional details about the event and affected system; specified as a stringified JSON object'
+        type: string
+      links:
+        description: 'Relevant links for the event and affected system; specified as a stringified JSON array of objects of schema {"href":"http://google.com","text":"optional description"}'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+
+  pagerduty-notification:
+    name: PagerDuty Notification
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+      - uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # v3.3.0
+        with:
+          go-version: '1.18'
+
+      - uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0 # v6.3.4
+        id: detailsAndLinks
+        env:
+          DETAILS: ${{ inputs.details }}
+          LINKS: ${{ inputs.links }}
+        with:
+          result-encoding: string
+          script: |
+            const { DETAILS, LINKS } = process.env;
+
+            let output = ",";
+            if (DETAILS !== "") {
+              output += '\n  "details": ' + DETAILS;
+              if (LINKS !== "") {
+                output += ',';
+              }
+            }
+            if (LINKS !== "") {
+              output += '\n  "links": ' + LINKS;
+            }
+            if (output.length == 1) {
+              output = "";
+            }
+            return output;
+
+      - name: Pagerduty Notification
+        shell: bash
+        env:
+          PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
+        run: |
+          cd pager-duty
+          go run main.go --retry-count ${{ inputs.retries }} <<EOF
+          {
+            "summary": "${{ inputs.summary }}",
+            "source": "${{ inputs.source }}",
+            "severity": "${{ inputs.severity }}",
+            "component": "${{ inputs.component }}",
+            "group": "${{ inputs.group }}"${{ steps.detailsAndLinks.outputs.result }}
+          }
+          EOF
