@@ -1,0 +1,9 @@
+{
+    "buildType": "somebuildtype",
+    "builder": {
+        "id": "foom0YFP0GKOSvP8g=="
+    },
+    "invocation": {
+        "configSource": {}
+    }
+}
