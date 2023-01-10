@@ -1,4 +1,8 @@
-# Project Name
+# Sigstore Probers
+
+This repository contains probers for staging and production Sigstore environments.
+
+If a prober fails, the oncall on duty will be notified.
 
 ## Security
 
