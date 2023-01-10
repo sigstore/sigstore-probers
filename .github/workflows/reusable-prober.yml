@@ -1,0 +1,346 @@
+name: Reusable Sigstore Prober Workflow
+
+on:
+  workflow_call:
+    secrets:
+      PAGERDUTY_INTEGRATION_KEY:
+        description: 'Integration key for PagerDuty'
+        required: true
+    inputs:
+      rekor_url:
+        required: false
+        type: string
+        default: 'https://rekor.sigstore.dev'
+        description: 'Rekor URL'
+      fulcio_url:
+        required: false
+        type: string
+        default: 'https://fulcio.sigstore.dev'
+        description: 'Fulcio URL'
+      oidc_url:
+        required: false
+        type: string
+        default: 'https://oauth2.sigstore.dev/auth'
+        description: 'OIDC URL'
+      enable_staging:
+        required: false
+        type: boolean
+      tuf_repo:
+        required: false
+        type: string
+        default: 'https://storage.googleapis.com/sigstore-tuf-root'
+        description: 'TUF Repo'
+      tuf_preprod_repo:
+        required: false
+        type: string
+        default: 'https://storage.googleapis.com/sigstore-preprod-tuf-root'
+        description: 'TUF Repo'
+      tuf_root_path:
+        required: false
+        type: string
+        default: "root.json"
+        description: "path to the tuf root"
+      tuf_root_url:
+        required: false
+        type: string
+      triggerPagerDutyTest:
+        description: 'Trigger PagerDuty test message'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+
+  sigstore-probe:
+    runs-on: ubuntu-latest
+
+    outputs:
+      sigstore_probe: ${{ steps.msg.outputs.sigstore_probe }}
+    steps:
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+      - name: Set up Go
+        uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # v3.3.0
+        with:
+          go-version: 1.18
+          check-latest: true
+
+      - name: Use module cache
+        uses: actions/cache@58c146cc91c5b9e778e71775dfe9bf1442ad9a12 # v3.0.10
+        timeout-minutes: 10
+        continue-on-error: true
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ github.job }}-${{ hashFiles('**/go.sum', '/go.work.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install 'prober' from sigstore/scaffolding
+        run: |
+          make -C prober/ prober
+          echo "PATH=$PATH:$PWD/prober/hack/toolz/bin" >> $GITHUB_ENV
+
+      # Make sure rekor is up and we can get root info
+      - name: Run prober
+        env:
+          DEBUG: 1
+        run: prober --one-time --rekor-url ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }}
+
+      - name: Set messages
+        id: msg
+        if: success() || failure()
+        run: |
+          echo "sigstore_probe=good" >> $GITHUB_OUTPUT
+          if [ "${{ job.status }}" == 'failure' ]; then echo "sigstore_probe=failure" >> $GITHUB_OUTPUT; fi
+
+
+  root-probe:
+    runs-on: ubuntu-20.04
+    outputs:
+      root_state: ${{ steps.msg.outputs.root_state }}
+    steps:
+      - name: Checkout public-good-instance code
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.0.2
+      - name: Checkout root-signing to get roots
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.0.2
+        with:
+          repository: sigstore/root-signing
+          ref: main
+          path: root-signing
+      - uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # v3.3.0
+        with:
+          go-version: 1.18
+          check-latest: true
+      - name: Use module cache
+        uses: actions/cache@58c146cc91c5b9e778e71775dfe9bf1442ad9a12 # v3.0.8
+        timeout-minutes: 10
+        continue-on-error: true
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ github.job }}-${{ hashFiles('**/go.sum', '/go.work.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install 'verify' tool from sigstore/root-signing
+        run: |
+          make -C prober/ verify
+          echo "PATH=$PATH:$PWD/prober/hack/toolz/bin" >> $GITHUB_ENV
+
+      - name: Check expiration
+        run: |
+          if [ "${{ inputs.tuf_root_url }}" != "" ]; then
+            curl -Lo root.json ${{ inputs.tuf_root_url }}
+            export ROOT_PATH=root.json
+          else
+            export ROOT_PATH=$GITHUB_WORKSPACE/root-signing/${{ inputs.tuf_root_path }}
+          fi
+
+          export EXPIRY=$(date -d '+3 days' '+%Y/%m/%d')
+          verify repository --repository ${{ inputs.tuf_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY}
+
+          export EXPIRY=$(date -d '+15 days' '+%Y/%m/%d')
+          echo "Verifying root valid within 15 days..."
+          verify repository --repository ${{ inputs.tuf_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json
+
+          # For preprod/staging TUF bucket
+          export EXPIRY=$(date -d '+3 days' '+%Y/%m/%d')
+          verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY}
+
+          export EXPIRY=$(date -d '+15 days' '+%Y/%m/%d')
+          echo "Verifying root valid within 15 days..."
+          verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json
+
+      - name: Set messages
+        id: msg
+        if: success() || failure()
+        run: |
+          echo "root_state=good" >> $GITHUB_OUTPUT
+          if [ "${{ job.status }}" == 'failure' ]; then echo "root_state=failure" >> $GITHUB_OUTPUT; fi
+
+  rekor-fulcio-e2e:
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      COSIGN_EXPERIMENTAL: "true"
+      GIT_HASH: ${{ github.sha }}
+      GIT_VERSION: unstable
+      GITHUB_RUN_ID: ${{ github.run_id }}
+      GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
+      IMAGE: localhost:1338/image:${{ github.sha }}-${{ github.run_id }}
+      REKOR_SERVER: ${{ inputs.rekor_url }}
+    runs-on: ubuntu-latest
+    outputs:
+      rekor_fulcio_e2e: ${{ steps.msg.outputs.rekor_fulcio_e2e }}
+    steps:
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.0.2
+      - uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # v3.3.0
+        with:
+          go-version: 1.18
+          check-latest: true
+      - name: Use module cache
+        uses: actions/cache@58c146cc91c5b9e778e71775dfe9bf1442ad9a12 # v3.0.8
+        timeout-minutes: 10
+        continue-on-error: true
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ github.job }}-${{ hashFiles('**/go.sum', '/go.work.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      # Install crane / rekor-cli / cosign tools
+      - name: Install (crane, rekor-cli, cosign) tools
+        run: |
+          make -C prober/ crane rekor-cli cosign
+          echo "PATH=$PATH:$PWD/prober/hack/toolz/bin" >> $GITHUB_ENV
+
+      # Setup the registry on port 1338
+      - uses: chainguard-dev/actions/setup-registry@main
+
+      - name: Build and copy a container image
+        continue-on-error: true
+        run: |
+          for i in {1..5}
+          do
+            if crane cp busybox@sha256:d2b53584f580310186df7a2055ce3ff83cc0df6caacf1e3489bff8cf5d0af5d8 ${IMAGE}; then
+              echo "Successfully copied image" && exit 0
+            else
+              echo "Failed to copy image ${IMAGE}" && sleep 10
+            fi
+          done
+          exit 1
+
+      # START: PREPRODUCTION VERIFICATION
+      # TODO: Create a matrix (https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs)
+      #       to reduce duplication
+      # Test the preproduction bucket only for prod
+      - name: Initialize preprod TUF root
+        if: ${{ inputs.enable_staging == false }}
+        run: |
+          curl -Lo root.json ${{ inputs.tuf_preprod_repo }}/root.json
+          for i in {1..5}
+          do
+            if cosign initialize --mirror=${{ inputs.tuf_preprod_repo }} --root=root.json; then
+              echo "Successfully initialized" && exit 0
+            else
+              echo "Failed to initialize" && sleep 10
+            fi
+          done
+
+      # Test signing in preproduction
+      - name: Sign and verify the image with preprod TUF
+        if: ${{ inputs.enable_staging == false }}
+        run: |
+          cosign sign --force ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }}
+          cosign verify ${IMAGE} --rekor-url  ${{ inputs.rekor_url }}
+          
+      - name: Remove preprod TUF
+        if: ${{ inputs.enable_staging == false }}
+        run: |
+          rm -rf ~/.sigstore
+      # END: PREPRODUCTION VERIFICATION
+
+      - name: Initialize prod TUF root
+        if: ${{ inputs.enable_staging == false }}
+        run: |
+          for i in {1..5}
+          do
+            if cosign initialize; then
+              echo "Successfully initialized" && exit 0
+            else
+              echo "Failed to initialize" && sleep 10
+            fi
+          done
+
+      - name: Initialize staging TUF root
+        if: ${{ inputs.enable_staging }}
+        run: |
+          curl -Lo root.json ${{ inputs.tuf_root_url }}
+          for i in {1..5}
+          do
+            if cosign initialize --mirror=https://tuf-root-staging.storage.googleapis.com --root=root.json; then
+              echo "Successfully initialized" && exit 0
+            else
+              echo "Failed to initialize" && sleep 10
+            fi
+          done
+          exit 1
+
+      - name: Sign and verify the image
+        run: |
+          cosign sign --force ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }}
+          cosign verify ${IMAGE} --rekor-url  ${{ inputs.rekor_url }}
+
+      - name: Generate and upload attestation
+        run: |
+          cosign attest --predicate ./prober/attestation.json --type slsaprovenance --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }} ${IMAGE}
+          cosign verify-attestation --rekor-url  ${{ inputs.rekor_url }} --type=slsaprovenance ${IMAGE}
+          # Get attestation hash
+          IMAGE_ATT=$(echo $(cosign triangulate ${IMAGE}) | sed 's/\.sig/\.att/')
+          DIGEST=$(crane manifest ${IMAGE_ATT} | jq -r '.layers[-1]'.digest)
+          echo "attestation_digest=${DIGEST}" >> $GITHUB_ENV
+
+      - name: Verify attestation contents
+        run: |
+          ./prober/verify-attestation.sh "${{ env.attestation_digest }}"
+
+      - name: Set messages
+        id: msg
+        if: success() || failure()
+        run: |
+          echo "rekor_fulcio_e2e=good" >> $GITHUB_OUTPUT
+          if [ "${{ job.status }}" == 'failure' ]; then echo "rekor_fulcio_e2e=failure" >> $GITHUB_OUTPUT; fi
+
+  compute-summary-msg:
+    runs-on: ubuntu-latest
+    outputs:
+      summary: ${{ steps.msg.outputs.summary }}
+      group: ${{ steps.msg.outputs.group }}
+    steps:
+      - name: Set messages
+        id: msg
+        if: success() || failure()
+        run: |
+          if [ "${{ inputs.triggerPagerDutyTest }}" == "true" ]; then
+            echo "summary=Test Notification" >> $GITHUB_OUTPUT
+          else
+            echo "summary=Prober Failed" >> $GITHUB_OUTPUT
+          fi
+          echo "group=production" >> $GITHUB_OUTPUT
+          if [ ${{ inputs.enable_staging }} == 'true' ]; then
+            echo "group=staging" >> $GITHUB_OUTPUT;
+          fi
+
+  pagerduty-notification:
+    if: github.event.inputs.triggerPagerDutyTest=='true' || failure()
+    needs: [sigstore-probe, root-probe, rekor-fulcio-e2e, compute-summary-msg]
+    uses: ./.github/workflows/reusable-pager.yml
+    secrets:
+      PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
+    with:
+      summary: ${{ needs.compute-summary-msg.outputs.summary }}
+      component: "health prober"
+      group: ${{ needs.compute-summary-msg.outputs.group }}
+      details: >
+        {
+          "Environment": "${{ needs.compute-summary-msg.outputs.group }}",
+          "Failure URL": "https://github.com/sigstore/public-good-instance/actions/runs/${{ github.run_id }}",
+          "Commit": "${{ github.sha }}",
+          "Prober": "${{ needs.sigstore-probe.outputs.sigstore_probe }}",
+          "GCS Root": "${{ needs.root-probe.outputs.root_state }}",
+          "Rekor Fulcio E2E Test": "${{ needs.rekor-fulcio-e2e.outputs.rekor_fulcio_e2e }}"
+        }
+      links: >
+        [
+          {
+            "href": "https://github.com/sigstore/public-good-instance/blob/main/playbooks/alerting/alerts/k8s-api-endpoint-prober.md",
+            "text": "Prober Failure Playbook"
+          }
+        ]
