@@ -1,0 +1,7 @@
+go 1.19
+
+use (
+	./pager-duty
+	./prober/ctlog/
+	./prober/hack/toolz
+)

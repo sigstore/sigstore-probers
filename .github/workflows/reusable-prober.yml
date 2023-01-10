@@ -102,7 +102,7 @@ jobs:
     outputs:
       root_state: ${{ steps.msg.outputs.root_state }}
     steps:
-      - name: Checkout public-good-instance code
+      - name: Checkout sigstore-probers code
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.0.2
       - name: Checkout root-signing to get roots
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.0.2
@@ -331,7 +331,7 @@ jobs:
       details: >
         {
           "Environment": "${{ needs.compute-summary-msg.outputs.group }}",
-          "Failure URL": "https://github.com/sigstore/public-good-instance/actions/runs/${{ github.run_id }}",
+          "Failure URL": "https://github.com/sigstore/sigstore-probers/actions/runs/${{ github.run_id }}",
           "Commit": "${{ github.sha }}",
           "Prober": "${{ needs.sigstore-probe.outputs.sigstore_probe }}",
           "GCS Root": "${{ needs.root-probe.outputs.root_state }}",
@@ -340,7 +340,7 @@ jobs:
       links: >
         [
           {
-            "href": "https://github.com/sigstore/public-good-instance/blob/main/playbooks/alerting/alerts/k8s-api-endpoint-prober.md",
+            "href": "https://github.com/sigstore/sigstore-probers/blob/main/playbooks/alerting/alerts/k8s-api-endpoint-prober.md",
             "text": "Prober Failure Playbook"
           }
         ]

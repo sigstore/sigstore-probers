@@ -1,4 +1,4 @@
-module github.com/sigstore/public-good-instance/prober/hack/toolz
+module github.com/sigstore/sigstore-probers/prober/hack/toolz
 
 go 1.18
 
