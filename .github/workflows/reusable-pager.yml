@@ -51,7 +51,7 @@ jobs:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       - uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # v3.3.0
         with:
-          go-version: '1.18'
+          go-version: '1.19'
 
       - uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0 # v6.3.4
         id: detailsAndLinks
