@@ -1,6 +1,6 @@
 module github.com/sigstore/sigstore-probers/prober/hack/toolz
 
-go 1.18
+go 1.19
 
 require (
 	github.com/google/go-containerregistry v0.12.1
