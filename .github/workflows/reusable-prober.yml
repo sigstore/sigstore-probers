@@ -114,17 +114,17 @@ jobs:
         with:
           go-version: 1.19
           check-latest: true
-      - name: Use module cache
-        uses: actions/cache@627f0f41f6904a5b1efbaed9f96d9eb58e92e920 # v3.2.4
-        timeout-minutes: 10
-        continue-on-error: true
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ github.job }}-${{ hashFiles('**/go.sum', '/go.work.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+#      - name: Use module cache
+#        uses: actions/cache@627f0f41f6904a5b1efbaed9f96d9eb58e92e920 # v3.2.4
+#        timeout-minutes: 10
+#        continue-on-error: true
+#        with:
+#          path: |
+#            ~/.cache/go-build
+#            ~/go/pkg/mod
+#          key: ${{ runner.os }}-go-${{ github.job }}-${{ hashFiles('**/go.sum', '/go.work.sum') }}
+#          restore-keys: |
+#            ${{ runner.os }}-go-
 
       - name: Install 'verify' tool from sigstore/root-signing
         run: |
