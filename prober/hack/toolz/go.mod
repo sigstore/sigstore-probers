@@ -7,7 +7,7 @@ require (
 	github.com/sigstore/cosign v1.13.1
 	github.com/sigstore/rekor v1.0.1
 	github.com/sigstore/root-signing v0.0.0-20221214162148-848fcf073360
-	github.com/sigstore/scaffolding v0.6.2
+	github.com/sigstore/scaffolding v0.6.3
 )
 
 require (
@@ -248,16 +248,16 @@ require (
 	google.golang.org/api v0.107.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230109162033-3c3c17ce83e6 // indirect
-	google.golang.org/grpc v1.52.0 // indirect
+	google.golang.org/grpc v1.52.3 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.26.0 // indirect
-	k8s.io/apimachinery v0.26.0 // indirect
-	k8s.io/client-go v0.26.0 // indirect
+	k8s.io/api v0.26.1 // indirect
+	k8s.io/apimachinery v0.26.1 // indirect
+	k8s.io/client-go v0.26.1 // indirect
 	k8s.io/klog/v2 v2.80.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
 	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d // indirect
