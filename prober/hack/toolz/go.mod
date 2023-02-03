@@ -7,7 +7,7 @@ require (
 	github.com/sigstore/cosign v1.13.1
 	github.com/sigstore/rekor v1.0.1
 	github.com/sigstore/root-signing v0.0.0-20221214162148-848fcf073360
-	github.com/sigstore/scaffolding v0.6.2
+	github.com/sigstore/scaffolding v0.6.3
 )
 
 require (
