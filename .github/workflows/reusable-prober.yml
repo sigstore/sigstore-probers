@@ -240,7 +240,7 @@ jobs:
         run: |
           cosign sign --force ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }}
           cosign verify ${IMAGE} --rekor-url  ${{ inputs.rekor_url }}
-          
+
       - name: Remove preprod TUF
         if: ${{ inputs.enable_staging == false }}
         run: |
@@ -340,7 +340,7 @@ jobs:
       links: >
         [
           {
-            "href": "https://github.com/sigstore/sigstore-probers/blob/main/playbooks/alerting/alerts/k8s-api-endpoint-prober.md",
+            "href": "https://github.com/sigstore/public-good-instance/blob/main/playbooks/alerting/alerts/k8s-api-endpoint-prober.md",
             "text": "Prober Failure Playbook"
           }
         ]

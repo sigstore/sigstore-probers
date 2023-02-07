@@ -76,7 +76,7 @@ jobs:
       links: >
         [
           {
-            "href": "https://github.com/sigstore/sigstore-probers/blob/main/playbooks/alerting/alerts/ct-log-uptime-failure.md",
+            "href": "https://github.com/sigstore/public-good-instance/blob/main/playbooks/alerting/alerts/ct-log-uptime-failure.md",
             "text": "CTFE Prober Failure Playbook"
           }
         ]
