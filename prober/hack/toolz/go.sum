@@ -864,8 +864,8 @@ github.com/sigstore/fulcio v1.0.0 h1:hBZW6qg9GXTtCX8jOg1hmyjYLrmsEKZGeMwAbW3XNEg
 github.com/sigstore/fulcio v1.0.0/go.mod h1:j4MzLxX/Be0rHYh3JF2dgMorkWGzEMHBqIHwFU8I/Rw=
 github.com/sigstore/rekor v1.0.1 h1:rcESXSNkAPRWFYZel9rarspdvneET60F2ngNkadi89c=
 github.com/sigstore/rekor v1.0.1/go.mod h1:ecTKdZWGWqE1pl3U1m1JebQJLU/hSjD9vYHOmHQ7w4g=
-github.com/sigstore/root-signing v0.0.0-20221214162148-848fcf073360 h1:lhVtmd8lZnBk5YDuW5VnktBqDQ9rGWcvNSWtKnO8qpA=
-github.com/sigstore/root-signing v0.0.0-20221214162148-848fcf073360/go.mod h1:0Z9u8rUPdmTvhjpL9g/YqQ+HtEjJPE7H/Km9mloS0i8=
+github.com/sigstore/root-signing v0.0.1-rc h1:2SQ49Nwgu1wJsa+QHTzRVLu1XnYpLfT4dJfFMEPxg6w=
+github.com/sigstore/root-signing v0.0.1-rc/go.mod h1:aC2D+6djte2iPEHbfQ4zgAHLIVbyqa57OttqGbv/5pQ=
 github.com/sigstore/scaffolding v0.6.3 h1:S2e17ORA59vO8CqgtXIBx7ksLUWAOs4xBQcU1tzpfhg=
 github.com/sigstore/scaffolding v0.6.3/go.mod h1:vBgXbUKme2k7sm6CMsF7LahMCRpTPSKjut3WxV7JjQw=
 github.com/sigstore/sigstore v1.5.1 h1:iUou0QJW8eQKMUkTXbFyof9ZOblDtfaW2Sn2+QI8Tcs=
