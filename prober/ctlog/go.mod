@@ -4,11 +4,13 @@ go 1.19
 
 require (
 	github.com/google/certificate-transparency-go v1.1.4
+	github.com/hashicorp/go-retryablehttp v0.7.1
 	github.com/sigstore/sigstore v1.4.5
 )
 
 require (
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/letsencrypt/boulder v0.0.0-20220929215747-76583552c2be // indirect
 	github.com/theupdateframework/go-tuf v0.5.2-0.20220930112810-3890c1e7ace4 // indirect
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399 // indirect

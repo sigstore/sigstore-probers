@@ -6,16 +6,17 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"net/http"
 	"strings"
 
 	ct "github.com/google/certificate-transparency-go"
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 )
 
 var (
 	shard string
 	env   string
+	retryCount uint
 )
 
 // ctfe.sigstore.dev/test
@@ -87,6 +88,7 @@ const sthPath = "/ct/v1/get-sth"
 func main() {
 	flag.StringVar(&shard, "shard", "", "The shard of the STH to get")
 	flag.StringVar(&env, "env", "", "The environment (production or staging)")
+	flag.UintVar(&retryCount, "retry-count", 5, "number of times to retry requests")
 	flag.Parse()
 
 	if env == "" {
@@ -135,7 +137,10 @@ func main() {
 }
 
 func getSTH(ctx context.Context, url string) (*ct.SignedTreeHead, error) {
-	req, err := http.Get(url)
+	retryClient := retryablehttp.NewClient()
+	retryClient.RetryMax = int(retryCount)
+
+	req, err := retryClient.Get(url)
 	if err != nil {
 		return nil, err
 	}
