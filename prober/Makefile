@@ -47,7 +47,7 @@ $(PROBER): $(TOOLS_DIR)/go.mod
 cosign: $(COSIGN)
 
 $(COSIGN): $(TOOLS_DIR)/go.mod
-	cd $(TOOLS_DIR); go build -trimpath -tags=toolz -o $(COSIGN) github.com/sigstore/cosign/cmd/cosign
+	cd $(TOOLS_DIR); go build -trimpath -tags=toolz -o $(COSIGN) github.com/sigstore/cosign/v2/cmd/cosign
 
 crane: $(CRANE)
 
