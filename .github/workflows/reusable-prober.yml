@@ -167,7 +167,7 @@ jobs:
       id-token: write
       contents: read
     env:
-      COSIGN_EXPERIMENTAL: "true"
+      COSIGN_YES: "true"
       GIT_HASH: ${{ github.sha }}
       GIT_VERSION: unstable
       GITHUB_RUN_ID: ${{ github.run_id }}
@@ -238,7 +238,7 @@ jobs:
       - name: Sign and verify the image with preprod TUF
         if: ${{ inputs.enable_staging == false }}
         run: |
-          cosign sign --force ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }}
+          cosign sign --yes ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }}
           cosign verify ${IMAGE} --rekor-url  ${{ inputs.rekor_url }}
 
       - name: Remove preprod TUF
@@ -275,7 +275,7 @@ jobs:
 
       - name: Sign and verify the image
         run: |
-          cosign sign --force ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }}
+          cosign sign --yes ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }}
           cosign verify ${IMAGE} --rekor-url  ${{ inputs.rekor_url }}
 
       - name: Generate and upload attestation
