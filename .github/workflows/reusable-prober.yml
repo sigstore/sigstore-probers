@@ -276,7 +276,7 @@ jobs:
       - name: Sign and verify the image
         run: |
           cosign sign --yes ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }}
-          cosign verify ${IMAGE} --rekor-url  ${{ inputs.rekor_url }}
+          cosign verify ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --certificate-oidc-issuer=https://token.actions.githubusercontent.com
 
       - name: Generate and upload attestation
         run: |
