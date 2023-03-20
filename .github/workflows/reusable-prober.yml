@@ -87,7 +87,12 @@ jobs:
       - name: Run prober
         env:
           DEBUG: 1
-        run: prober --one-time --rekor-url ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }}
+        uses: nick-fields/retry@v2
+        with:
+          timeout_seconds: 15
+          max_attempts: 3
+          retry_on: error
+          command: prober --one-time --rekor-url ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }}
 
       - name: Set messages
         id: msg
