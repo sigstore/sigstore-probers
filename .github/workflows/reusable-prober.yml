@@ -91,7 +91,7 @@ jobs:
         with:
           timeout_minutes: 5
           max_attempts: 3
-          retry_wait_seconds: 10
+          retry_wait_seconds: 60
           retry_on: error
           command: prober --one-time --rekor-url ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }}
 
