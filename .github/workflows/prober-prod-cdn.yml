@@ -1,0 +1,29 @@
+name: Production CDN Sigstore Prober
+
+on:
+  workflow_dispatch:
+    inputs:
+      triggerPagerDutyTest:
+        description: 'Trigger PagerDuty test message'
+        required: false
+        type: boolean
+  schedule:
+    # run every 15 minutes, as often as Github Actions allows
+    - cron:  '0/15 * * * *'
+
+permissions:
+  id-token: write
+  contents: read
+  packages: write
+
+jobs:
+  prober:
+    uses: ./.github/workflows/reusable-prober.yml
+    secrets:
+      PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
+    with:
+      tuf_root_path: "ceremony/2022-05-10/repository/root.json"
+      tuf_repo: "https://tuf-repo-cdn.sigstore.dev"
+      tuf_preprod_repo: "https://tuf-preprod-repo-cdn.sigstore.dev"
+      tuf_root_url: "https://tuf-repo-cdn.sigstore.dev/root.json"
+      triggerPagerDutyTest: ${{ github.event.inputs.triggerPagerDutyTest }}
