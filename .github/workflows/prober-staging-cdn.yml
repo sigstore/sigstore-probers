@@ -1,0 +1,36 @@
+name: Staging CDN Sigstore Prober
+
+on:
+  workflow_dispatch:
+    inputs:
+      triggerPagerDutyTest:
+        description: 'Trigger PagerDuty test message'
+        required: false
+        type: boolean
+  schedule:
+    # run every 15 minutes, as often as Github Actions allows
+    - cron:  '0/15 * * * *'
+
+permissions:
+  id-token: write
+  contents: read
+  packages: write
+
+jobs:
+  prober:
+    uses: ./.github/workflows/reusable-prober.yml
+    secrets:
+      PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
+    permissions:
+      id-token: write
+      contents: read
+      packages: write
+    with:
+      enable_staging: true
+      rekor_url: "https://rekor.sigstage.dev"
+      fulcio_url: "https://fulcio.sigstage.dev"
+      oidc_url: "https://oauth2.sigstage.dev/auth"
+      tuf_repo: "https://tuf-repo-cdn.sigstage.dev"
+      tuf_preprod_repo: "https://tuf-repo-cdn.sigstage.dev"
+      tuf_root_url: "https://tuf-repo-cdn.sigstage.dev/root.json"
+      triggerPagerDutyTest: ${{ github.event.inputs.triggerPagerDutyTest }}

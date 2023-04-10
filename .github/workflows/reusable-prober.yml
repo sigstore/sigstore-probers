@@ -140,7 +140,7 @@ jobs:
       - name: Check expiration
         run: |
           if [ "${{ inputs.tuf_root_url }}" != "" ]; then
-            curl -Lo root.json ${{ inputs.tuf_root_url }}
+            curl -Lo root.json --user-agent "sigstore-prober" ${{ inputs.tuf_root_url }}
             export ROOT_PATH=root.json
           else
             export ROOT_PATH=$GITHUB_WORKSPACE/root-signing/${{ inputs.tuf_root_path }}
@@ -230,7 +230,7 @@ jobs:
       - name: Initialize preprod TUF root
         if: ${{ inputs.enable_staging == false }}
         run: |
-          curl -Lo root.json ${{ inputs.tuf_preprod_repo }}/root.json
+          curl -Lo root.json --user-agent "sigstore-prober" ${{ inputs.tuf_preprod_repo }}/root.json
           for i in {1..5}
           do
             if cosign initialize --mirror=${{ inputs.tuf_preprod_repo }} --root=root.json; then
@@ -271,7 +271,7 @@ jobs:
           curl -Lo root.json ${{ inputs.tuf_root_url }}
           for i in {1..5}
           do
-            if cosign initialize --mirror=https://tuf-root-staging.storage.googleapis.com --root=root.json; then
+            if cosign initialize --mirror=${{ inputs.tuf_repo }} --root=root.json; then
               echo "Successfully initialized" && exit 0
             else
               echo "Failed to initialize" && sleep 10
