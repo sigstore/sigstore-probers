@@ -24,6 +24,6 @@ jobs:
     with:
       tuf_root_path: "ceremony/2022-05-10/repository/root.json"
       tuf_repo: "https://tuf-repo-cdn.sigstore.dev"
-      tuf_preprod_repo: "https://tuf-repo-cdn.sigstore.dev/preprod"
+      tuf_preprod_repo: "https://tuf-preprod-repo-cdn.sigstore.dev"
       tuf_root_url: "https://tuf-repo-cdn.sigstore.dev/root.json"
       triggerPagerDutyTest: ${{ github.event.inputs.triggerPagerDutyTest }}
