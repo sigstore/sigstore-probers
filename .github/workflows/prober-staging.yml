@@ -30,7 +30,7 @@ jobs:
       rekor_url: "https://rekor.sigstage.dev"
       fulcio_url: "https://fulcio.sigstage.dev"
       oidc_url: "https://oauth2.sigstage.dev/auth"
-      tuf_repo: "https://storage.googleapis.com/tuf-root-staging"
-      tuf_preprod_repo: "https://storage.googleapis.com/tuf-root-staging"
-      tuf_root_url: "https://storage.googleapis.com/tuf-root-staging/root.json"
+      tuf_repo: "https://tuf-repo-cdn.sigstage.dev"
+      tuf_preprod_repo: "https://tuf-repo-cdn.sigstage.dev"
+      tuf_root_url: "https://tuf-repo-cdn.sigstage.dev/root.json"
       triggerPagerDutyTest: ${{ github.event.inputs.triggerPagerDutyTest }}

@@ -28,12 +28,12 @@ on:
       tuf_repo:
         required: false
         type: string
-        default: 'https://storage.googleapis.com/sigstore-tuf-root'
+        default: 'https://tuf-repo-cdn.sigstore.dev'
         description: 'TUF Repo'
       tuf_preprod_repo:
         required: false
         type: string
-        default: 'https://storage.googleapis.com/sigstore-preprod-tuf-root'
+        default: 'https://tuf-preprod-repo-cdn.sigstore.dev'
         description: 'TUF Repo'
       tuf_root_path:
         required: false
