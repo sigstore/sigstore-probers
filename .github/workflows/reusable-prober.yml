@@ -59,7 +59,7 @@ jobs:
     outputs:
       sigstore_probe: ${{ steps.msg.outputs.sigstore_probe }}
     steps:
-      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
+      - uses: actions/checkout@83b7061638ee4956cf7545a6f7efe594e5ad0247 # v3.5.1
       - name: Set up Go
         uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v3.3.0
         with:
@@ -98,9 +98,9 @@ jobs:
       root_state: ${{ steps.msg.outputs.root_state }}
     steps:
       - name: Checkout sigstore-probers code
-        uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
+        uses: actions/checkout@83b7061638ee4956cf7545a6f7efe594e5ad0247 # v3.5.1
       - name: Checkout root-signing to get roots
-        uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
+        uses: actions/checkout@83b7061638ee4956cf7545a6f7efe594e5ad0247 # v3.5.1
         with:
           repository: sigstore/root-signing
           ref: main
@@ -163,7 +163,7 @@ jobs:
     outputs:
       rekor_fulcio_e2e: ${{ steps.msg.outputs.rekor_fulcio_e2e }}
     steps:
-      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
+      - uses: actions/checkout@83b7061638ee4956cf7545a6f7efe594e5ad0247 # v3.5.1
       - uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v3.3.0
         with:
           go-version-file: 'prober/hack/toolz/go.mod'
