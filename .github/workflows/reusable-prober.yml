@@ -243,7 +243,7 @@ jobs:
       - name: Sign and verify the image with preprod TUF
         if: ${{ inputs.enable_staging == false }}
         run: |
-          cosign sign --yes ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }}
+          cosign sign --yes ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }} --oidc-provider github
           cosign verify ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity-regexp='https://github.com/sigstore/sigstore-probers/.github/workflows/reusable-prober.yml@refs/.*'
 
       - name: Remove preprod TUF
@@ -280,7 +280,7 @@ jobs:
 
       - name: Sign and verify the image
         run: |
-          cosign sign --yes ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }}
+          cosign sign --yes ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }} --oidc-provider github
           cosign verify ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity-regexp='https://github.com/sigstore/sigstore-probers/.github/workflows/reusable-prober.yml@refs/.*'
 
       - name: Generate and upload attestation
