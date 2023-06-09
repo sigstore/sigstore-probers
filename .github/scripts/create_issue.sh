@@ -19,7 +19,7 @@ set -euo pipefail
 # Gets the name of the currently running workflow file.
 # Note: this requires GITHUB_TOKEN to be set in the workflows.
 this_file() {
-    gh api -H "Accept: application/vnd.github.v3+json" "/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" | jq -r '.path' | cut -d '/' -f3
+    curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID | jq -r '.path' | cut -d '/' -f3
 }
 
 # Creates the body of the issue.
@@ -41,7 +41,13 @@ EOF
 
 # creates a github issue
 create_issue() {
+  echo "in create issue"
+  echo "in file"
+  echo $GITHUB_REPOSITORY
+  echo $GITHUB_RUN_ID
+
   THIS_FILE=$(this_file)
+  echo "after"
   create_issue_body
 
   ISSUE_ID=$(gh -R "$ISSUE_REPOSITORY" issue list --label "bug" --state open -S "$THIS_FILE" --json number | jq '.[0]' | jq -r '.number' | jq 'select (.!=null)')
