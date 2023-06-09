@@ -55,6 +55,7 @@ jobs:
 
   sigstore-probe:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     outputs:
       sigstore_probe: ${{ steps.msg.outputs.sigstore_probe }}
@@ -103,6 +104,7 @@ jobs:
 
 
   root-probe:
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     outputs:
       root_state: ${{ steps.msg.outputs.root_state }}
