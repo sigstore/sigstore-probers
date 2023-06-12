@@ -41,22 +41,29 @@ EOF
 
 # creates a github issue
 create_issue() {
-  echo "in create issue"
-  echo "in file"
-  echo $GITHUB_REPOSITORY
-  echo $GITHUB_RUN_ID
+    # if issue is not failure or success, error
+    if [[ "$ISSUE_TYPE" != "FAILURE" && "$ISSUE_TYPE" != "SUCCESS" ]]; then
+        echo "ISSUE_TYPE must be either 'FAILURE' or 'SUCCESS'"
+        return 1
+    fi
+    THIS_FILE=$(this_file)
+    ISSUE_ID=$(gh -R "$ISSUE_REPOSITORY" issue list --label "bug" --state open -S "$THIS_FILE" --json number | jq '.[0]' | jq -r '.number' | jq 'select (.!=null)')
+    create_issue_body
 
-  THIS_FILE=$(this_file)
-  echo "after"
-  create_issue_body
-
-  ISSUE_ID=$(gh -R "$ISSUE_REPOSITORY" issue list --label "bug" --state open -S "$THIS_FILE" --json number | jq '.[0]' | jq -r '.number' | jq 'select (.!=null)')
-
-  if [[ -z "$ISSUE_ID" ]]; then
-      # Replace `-`` by ` `, remove the last 4 characters `.yml`. Expected: "snapshot timestamp".
-      TITLE=$(echo "$THIS_FILE" | sed -e 's/\-/ /g' | rev | cut -c5- | rev)
-      GH_TOKEN=$GITHUB_TOKEN gh -R "$ISSUE_REPOSITORY" issue create -t "[bug]: Updating workflow $TITLE" -F ./BODY --label "bug"
-  else
-      GH_TOKEN=$GITHUB_TOKEN gh -R "$ISSUE_REPOSITORY" issue comment "$ISSUE_ID" -F ./BODY
-  fi
+    if [[ "$ISSUE_TYPE" == "FAILURE" ]]; then
+        # on failure create a new issue
+        if [[ -z "$ISSUE_ID" ]]; then
+            # Replace `-`` by ` `, remove the last 4 characters `.yml`. Expected: "snapshot timestamp".
+            TITLE=$(echo "$THIS_FILE" | sed -e 's/\-/ /g' | rev | cut -c5- | rev)
+            echo gh -R "$ISSUE_REPOSITORY" issue create -t "[bug]: Updating workflow $TITLE" -F ./BODY --label "bug"
+            GH_TOKEN=$GITHUB_TOKEN gh -R "$ISSUE_REPOSITORY" issue create -t "[bug]: Updating workflow $TITLE" -F ./BODY --label "bug"
+        else
+            echo gh -R "$ISSUE_REPOSITORY" issue comment "$ISSUE_ID" -F ./BODY
+            GH_TOKEN=$GITHUB_TOKEN gh -R "$ISSUE_REPOSITORY" issue comment "$ISSUE_ID" -F ./BODY
+        fi
+    else
+        # on success close it
+        echo gh -R "$ISSUE_REPOSITORY" issue close "$ISSUE_ID" -c "$(cat ./BODY)"
+        GH_TOKEN=$GITHUB_TOKEN gh -R "$ISSUE_REPOSITORY" issue close "$ISSUE_ID" -c "$(cat ./BODY)"    
+    fi
 }
