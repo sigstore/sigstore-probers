@@ -20,6 +20,10 @@ updates:
     directory: "./prober/hack/toolz"
     schedule:
       interval: "daily"
+  - package-ecosystem: "gomod"
+    directory: "./prober/ctlog"
+    schedule:
+      interval: "daily"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
