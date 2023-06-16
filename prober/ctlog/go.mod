@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/google/certificate-transparency-go v1.1.4
-	github.com/hashicorp/go-retryablehttp v0.7.2
+	github.com/hashicorp/go-retryablehttp v0.7.4
 	github.com/sigstore/sigstore v1.6.0
 )
 
