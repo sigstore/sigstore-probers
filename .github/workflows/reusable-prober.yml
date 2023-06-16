@@ -55,14 +55,15 @@ jobs:
 
   sigstore-probe:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     outputs:
       sigstore_probe: ${{ steps.msg.outputs.sigstore_probe }}
     steps:
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: Set up Go
         id: setup-go
-        uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v3.3.0
+        uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v3.3.0
         with:
           go-version-file: 'prober/hack/toolz/go.mod'
           check-latest: true
@@ -103,19 +104,20 @@ jobs:
 
 
   root-probe:
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     outputs:
       root_state: ${{ steps.msg.outputs.root_state }}
     steps:
       - name: Checkout sigstore-probers code
-        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: Checkout root-signing to get roots
-        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
         with:
           repository: sigstore/root-signing
           ref: main
           path: root-signing
-      - uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v3.3.0
+      - uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v3.3.0
         id: setup-go
         with:
           go-version-file: 'prober/hack/toolz/go.mod'
@@ -183,8 +185,8 @@ jobs:
     outputs:
       rekor_fulcio_e2e: ${{ steps.msg.outputs.rekor_fulcio_e2e }}
     steps:
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
-      - uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v3.3.0
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v3.3.0
         id: setup-go
         with:
           go-version-file: 'prober/hack/toolz/go.mod'
@@ -243,7 +245,7 @@ jobs:
       - name: Sign and verify the image with preprod TUF
         if: ${{ inputs.enable_staging == false }}
         run: |
-          cosign sign --yes ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }}
+          cosign sign --yes ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }} --oidc-provider github-actions
           cosign verify ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity-regexp='https://github.com/sigstore/sigstore-probers/.github/workflows/reusable-prober.yml@refs/.*'
 
       - name: Remove preprod TUF
@@ -280,7 +282,7 @@ jobs:
 
       - name: Sign and verify the image
         run: |
-          cosign sign --yes ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }}
+          cosign sign --yes ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }} --oidc-provider github-actions
           cosign verify ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity-regexp='https://github.com/sigstore/sigstore-probers/.github/workflows/reusable-prober.yml@refs/.*'
 
       - name: Generate and upload attestation
