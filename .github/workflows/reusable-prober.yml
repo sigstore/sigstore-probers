@@ -50,7 +50,7 @@ on:
 
 permissions:
   contents: read
-
+  id-token: write
 jobs:
 
   sigstore-probe:
@@ -184,8 +184,25 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       rekor_fulcio_e2e: ${{ steps.msg.outputs.rekor_fulcio_e2e }}
+      skip_pagerduty: ${{ steps.set-skip-pagerduty.outputs.skip_pagerduty }}
     steps:
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+  
+      # This server is often down, resulting in a lot of flaky probers
+      # If the server is down, and this step fails, we don't alert PagerDuty
+      - name: Confirm Github OIDC Server is Available
+        continue-on-error: true
+        run: |
+          curl -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" $ACTIONS_ID_TOKEN_REQUEST_URL&audience=sigstore
+
+      # Since the server is down, we want to ignore the failure in this workflow
+      # and skip paging PagerDuty
+      - name: Set skip_pagerduty outputs
+        id: set-skip-pagerduty
+        if: failure()
+        run: |
+          echo "skip_pagerduty=true" >> $GITHUB_OUTPUT
+
       - uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v3.3.0
         id: setup-go
         with:
@@ -326,7 +343,7 @@ jobs:
           fi
 
   pagerduty-notification:
-    if: github.event.inputs.triggerPagerDutyTest=='true' || failure()
+    if: github.event.inputs.triggerPagerDutyTest=='true' || (failure() && needs.rekor-fulcio-e2e.outputs.skip_pagerduty != 'true')
     needs: [sigstore-probe, root-probe, rekor-fulcio-e2e, compute-summary-msg]
     uses: ./.github/workflows/reusable-pager.yml
     secrets:
