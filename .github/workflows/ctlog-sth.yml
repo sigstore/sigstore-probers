@@ -15,6 +15,7 @@ jobs:
   ctlog-sth:
     name: CTLog STH probe
     runs-on: ubuntu-latest
+    timeout-minutes: 2
     outputs:
       summary: ${{ steps.ctlog_sth_probe.outputs.summary }}
       probe_status: ${{ steps.ctlog_sth_probe.outputs.probe_status }}
