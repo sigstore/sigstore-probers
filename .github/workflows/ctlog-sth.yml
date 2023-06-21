@@ -52,13 +52,12 @@ jobs:
           else
             echo "summary=CTLog STH Prober Failed" >> $GITHUB_OUTPUT;
           fi
-          echo "probe_status=success" >> $GITHUB_OUTPUT
           if ! go run ./prober/ctlog/ctlog-sth.go --env ${{ matrix.env }} --shard ${{ matrix.shard }} ; then
             echo "probe_status=failed" >> $GITHUB_OUTPUT
             exit 1
           fi
   pager:
-    if: github.event.inputs.triggerPagerDutyTest=='true' || failure()
+    if: github.event.inputs.triggerPagerDutyTest=='true' || (failure() && needs.ctlog-sth.outputs.probe_status == 'failed')
     needs: [ctlog-sth]
     uses: ./.github/workflows/reusable-pager.yml
     secrets:
