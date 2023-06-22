@@ -1,4 +1,4 @@
-name: Create a github issue on failure
+name: Create a github issue on failure or closes that on success
 on:
   workflow_call:
     inputs:
