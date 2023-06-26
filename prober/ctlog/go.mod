@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/google/certificate-transparency-go v1.1.6
 	github.com/hashicorp/go-retryablehttp v0.7.4
-	github.com/sigstore/sigstore v1.7.0
+	github.com/sigstore/sigstore v1.7.1
 )
 
 require (
