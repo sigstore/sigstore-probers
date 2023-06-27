@@ -1,0 +1,24 @@
+name: Create Issue
+description: Create a github issue on failure or closes that on success
+inputs:
+  issue_repository:
+    description: "The issue repository"
+    required: true
+    type: string
+  issue_type:
+    description: "The issue type: FAILURE, SUCCESS"
+    required: true
+    type: string
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+
+    - name: Run Create Issue Action
+      run: |
+        export ISSUE_REPOSITORY="${{ inputs.issue_repository }}"
+        export ISSUE_TYPE="${{ inputs.issue_type }}"
+        source .github/scripts/create_issue.sh
+        create_issue
