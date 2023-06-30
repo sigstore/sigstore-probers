@@ -16,7 +16,7 @@ runs:
     - name: Checkout this repo
       uses: actions/checkout@v3
       with:
-        repository: yrobla/sigstore-probers
+        repository: sigstore/sigstore-probers
         path: sigstore-probers
     - name: Run Create Issue Action
       shell: bash
