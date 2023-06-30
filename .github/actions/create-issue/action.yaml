@@ -21,5 +21,5 @@ runs:
       run: |
         export ISSUE_REPOSITORY="${{ inputs.issue_repository }}"
         export ISSUE_TYPE="${{ inputs.issue_type }}"
-        source .github/scripts/create_issue.sh
+        source ${{ github.action_path }}.github/scripts/create_issue.sh
         create_issue
