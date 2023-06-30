@@ -12,6 +12,7 @@ inputs:
 
 runs:
   using: "composite"
+  steps:
     - name: Run Create Issue Action
       shell: bash
       run: |
