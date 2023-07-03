@@ -42,8 +42,8 @@ permissions:
   contents: read
 
 jobs:
-
   pagerduty-notification:
+    timeout-minutes: 10
     name: PagerDuty Notification
     runs-on: ubuntu-latest
 

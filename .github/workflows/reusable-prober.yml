@@ -170,6 +170,7 @@ jobs:
           if [ "${{ job.status }}" == 'failure' ]; then echo "root_state=failure" >> $GITHUB_OUTPUT; fi
 
   rekor-fulcio-e2e:
+    timeout-minutes: 10
     permissions:
       id-token: write
       contents: read
