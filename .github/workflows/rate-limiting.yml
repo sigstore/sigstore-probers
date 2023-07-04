@@ -13,6 +13,7 @@ on:
 
 jobs:
   rate-limiting:
+    timeout-minutes: 10
     name: Nginx Rate Limiting Test
     runs-on: ubuntu-latest
     outputs:
