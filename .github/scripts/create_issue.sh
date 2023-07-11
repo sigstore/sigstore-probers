@@ -60,17 +60,17 @@ create_issue() {
         if [[ -z "$ISSUE_ID" ]]; then
             # Replace `-`` by ` `, remove the last 4 characters `.yml`. Expected: "snapshot timestamp".
             TITLE=$(echo "$THIS_FILE" | sed -e 's/\-/ /g' | rev | cut -c5- | rev)
-            echo gh -R "$ISSUE_REPOSITORY" issue create -t "[bug]: Updating workflow $TITLE" -F ./BODY --label "bug"
-            GH_TOKEN=$GITHUB_TOKEN gh -R "$ISSUE_REPOSITORY" issue create -t "[bug]: Updating workflow $TITLE" -F ./BODY --label "bug"
+            echo gh -R "$ISSUE_REPOSITORY" issue create -t "[bug]: Updating workflow $TITLE" -b "$BODY" --label "bug"
+            GH_TOKEN=$GITHUB_TOKEN gh -R "$ISSUE_REPOSITORY" issue create -t "[bug]: Updating workflow $TITLE" -b "$BODY" --label "bug"
         else
-            echo gh -R "$ISSUE_REPOSITORY" issue comment "$ISSUE_ID" -F ./BODY
-            GH_TOKEN=$GITHUB_TOKEN gh -R "$ISSUE_REPOSITORY" issue comment "$ISSUE_ID" -F ./BODY
+            echo gh -R "$ISSUE_REPOSITORY" issue comment "$ISSUE_ID" -b "$BODY"
+            GH_TOKEN=$GITHUB_TOKEN gh -R "$ISSUE_REPOSITORY" issue comment "$ISSUE_ID" -b "$BODY"
         fi
     else
         issue_body "Tests are passing now. Closing this issue."
 
         # on success close it
-        echo gh -R "$ISSUE_REPOSITORY" issue close "$ISSUE_ID" -c "$(cat ./BODY)"
-        GH_TOKEN=$GITHUB_TOKEN gh -R "$ISSUE_REPOSITORY" issue close "$ISSUE_ID" -c "$(cat ./BODY)"    
+        echo gh -R "$ISSUE_REPOSITORY" issue close "$ISSUE_ID" -c "$BODY"
+        GH_TOKEN=$GITHUB_TOKEN gh -R "$ISSUE_REPOSITORY" issue close "$ISSUE_ID" -c "$BODY"
     fi
 }
