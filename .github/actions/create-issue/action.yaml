@@ -13,13 +13,15 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout code
+    - name: Checkout sigstore/sigstore-probers
       uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
-
+      with:
+        repository: sigstore/sigstore-probers
+        path: sigstore-probers
     - name: Run Create Issue Action
       shell: bash
       run: |
         export ISSUE_REPOSITORY="${{ inputs.issue_repository }}"
         export ISSUE_TYPE="${{ inputs.issue_type }}"
-        source .github/scripts/create_issue.sh
+        source sigstore-probers/.github/scripts/create_issue.sh
         create_issue
