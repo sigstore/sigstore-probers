@@ -109,7 +109,7 @@ func main() {
 		panic(fmt.Sprintf("shard %s not supported for env %s", shard, env))
 	}
 
-	sthURL := fmt.Sprintf("%s/%s/%s", strings.TrimRight(url, "/"), shard, sthPath)
+	sthURL := fmt.Sprintf("%s/%s%s", strings.TrimRight(url, "/"), shard, sthPath)
 	sth, err := getSTH(context.TODO(), sthURL)
 	if err != nil {
 		panic(fmt.Sprintf("failed to get STH: %v", err))
