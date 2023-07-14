@@ -53,7 +53,7 @@ create_issue() {
     THIS_FILE=$(this_file)
     ISSUE_ID=$(gh -R "$ISSUE_REPOSITORY" issue list --label "bug" --state open -S "$THIS_FILE" --json number | jq '.[0]' | jq -r '.number' | jq 'select (.!=null)')
 
-    if [[ "$ISSUE_TYPE_UPPERCASE" == "FAILURE" ]]; then    
+    if [[ "$ISSUE_TYPE_UPPERCASE" == "FAILURE" ]]; then
         # on failure create a new issue
         issue_body "Opening a new issue as tests are failing."
 
@@ -67,10 +67,16 @@ create_issue() {
             GH_TOKEN=$GITHUB_TOKEN gh -R "$ISSUE_REPOSITORY" issue comment "$ISSUE_ID" -b "$BODY"
         fi
     else
-        issue_body "Tests are passing now. Closing this issue."
+        # we only need to close if there was a previous issue id
+        if [[ -z "$ISSUE_ID" ]]; then
+            echo "No previous issues to close, continuing as normal."
+            return 0
+        else
+            issue_body "Tests are passing now. Closing this issue."
 
-        # on success close it
-        echo gh -R "$ISSUE_REPOSITORY" issue close "$ISSUE_ID" -c "$BODY"
-        GH_TOKEN=$GITHUB_TOKEN gh -R "$ISSUE_REPOSITORY" issue close "$ISSUE_ID" -c "$BODY"
+            # on success close it
+            echo gh -R "$ISSUE_REPOSITORY" issue close "$ISSUE_ID" -c "$BODY"
+            GH_TOKEN=$GITHUB_TOKEN gh -R "$ISSUE_REPOSITORY" issue close "$ISSUE_ID" -c "$BODY"
+        fi
     fi
 }
