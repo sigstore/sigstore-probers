@@ -147,7 +147,7 @@ jobs:
             export ROOT_PATH=$GITHUB_WORKSPACE/root-signing/${{ inputs.tuf_root_path }}
           fi
 
-          export EXPIRY=$(date -d '+3 days' '+%Y/%m/%d')
+          export EXPIRY=$(date -d '+2 days' '+%Y/%m/%d')
           verify repository --repository ${{ inputs.tuf_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY}
 
           export EXPIRY=$(date -d '+15 days' '+%Y/%m/%d')
@@ -155,7 +155,7 @@ jobs:
           verify repository --repository ${{ inputs.tuf_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json
 
           # For preprod/staging TUF bucket
-          export EXPIRY=$(date -d '+3 days' '+%Y/%m/%d')
+          export EXPIRY=$(date -d '+2 days' '+%Y/%m/%d')
           verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY}
 
           export EXPIRY=$(date -d '+15 days' '+%Y/%m/%d')
