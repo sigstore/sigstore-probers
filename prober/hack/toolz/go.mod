@@ -6,7 +6,7 @@ require (
 	github.com/google/go-containerregistry v0.15.2
 	github.com/sigstore/cosign/v2 v2.1.1
 	github.com/sigstore/rekor v1.2.2
-	github.com/sigstore/root-signing v0.0.1-rc
+	github.com/sigstore/root-signing v0.0.2-rc
 	github.com/sigstore/scaffolding v0.6.4
 )
 
@@ -251,8 +251,8 @@ require (
 	golang.org/x/net v0.11.0 // indirect
 	golang.org/x/oauth2 v0.9.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.9.0 // indirect
-	golang.org/x/term v0.9.0 // indirect
+	golang.org/x/sys v0.10.0 // indirect
+	golang.org/x/term v0.10.0 // indirect
 	golang.org/x/text v0.10.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.9.3 // indirect
@@ -268,7 +268,6 @@ require (
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gotest.tools/v3 v3.1.0 // indirect
 	k8s.io/api v0.27.3 // indirect
 	k8s.io/apimachinery v0.27.3 // indirect
 	k8s.io/client-go v0.27.3 // indirect
