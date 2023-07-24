@@ -20,7 +20,7 @@ on:
         default: 'GitHub Actions Prober'
         type: string
       severity:
-        description: 'The perceived severity of the status the event is describing with respect to the affected system. This can be "critical", "error", "warning" or "info".'
+        description: 'The perceived severity of the status the event is describing with respect to the affected system. This can be "critical", "error", "warning" or "info".' "critical" and "error" default to High urgency, "warning" and "info" to Low.
         default: 'error'
         type: string
       component:

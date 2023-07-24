@@ -34,3 +34,4 @@ jobs:
       tuf_preprod_repo: "https://tuf-repo-cdn.sigstage.dev"
       tuf_root_url: "https://tuf-repo-cdn.sigstage.dev/root.json"
       triggerPagerDutyTest: ${{ github.event.inputs.triggerPagerDutyTest }}
+      severity: "warning"

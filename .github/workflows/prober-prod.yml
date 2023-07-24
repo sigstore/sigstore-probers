@@ -24,3 +24,4 @@ jobs:
     with:
       tuf_root_path: "ceremony/2022-05-10/repository/root.json"
       triggerPagerDutyTest: ${{ github.event.inputs.triggerPagerDutyTest }}
+      severity: "error"

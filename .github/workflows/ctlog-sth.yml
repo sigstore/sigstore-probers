@@ -53,7 +53,12 @@ jobs:
             echo "summary=CTLog STH Prober Failed" >> $GITHUB_OUTPUT;
           fi
           if ! go run ./prober/ctlog/ctlog-sth.go --env ${{ matrix.env }} --shard ${{ matrix.shard }} ; then
-            echo "probe_status=failed" >> $GITHUB_OUTPUT
+            echo "probe_status=failed" >> "$GITHUB_OUTPUT"
+            if [[ "${{ matrix.env }}" == "production" ]]; then
+              echo "severity=error" >> "$GITHUB_OUTPUT"
+            else
+              echo "severity=warning" >> "$GITHUB_OUTPUT"
+            fi
             exit 1
           fi
   pager:
@@ -66,6 +71,7 @@ jobs:
       summary: ${{ needs.ctlog-sth.outputs.summary }}
       component: "ctfe"
       group: ${{ needs.ctlog-sth.outputs.env }}
+      severity: ${{ needs.ctlog-sth.outputs.severity }}
       details: >
         {
           "Environment": "${{ needs.ctlog-sth.outputs.env }}",

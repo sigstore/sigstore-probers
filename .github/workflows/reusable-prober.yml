@@ -47,6 +47,10 @@ on:
         description: 'Trigger PagerDuty test message'
         required: false
         type: string
+      severity:
+        description: 'The perceived severity of the status the event is describing with respect to the affected system. This can be "critical", "error", "warning" or "info".' "critical" and "error" default to High urgency, "warning" and "info" to Low.
+        default: 'error'
+        type: string
 
 permissions:
   contents: read
@@ -353,6 +357,7 @@ jobs:
       summary: ${{ needs.compute-summary-msg.outputs.summary }}
       component: "health prober"
       group: ${{ needs.compute-summary-msg.outputs.group }}
+      severity: ${{ inputs.severity }}
       details: >
         {
           "Environment": "${{ needs.compute-summary-msg.outputs.group }}",

@@ -70,6 +70,7 @@ jobs:
       summary: ${{ needs.rate-limiting.outputs.summary }}
       component: "rate-limiting prober"
       group: "production and staging"
+      severity: "warning"
       details: >
         {
           "Failure URL": "https://github.com/sigstore/public-good-instance/actions/runs/${{ github.run_id }}",
