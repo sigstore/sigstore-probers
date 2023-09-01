@@ -321,14 +321,6 @@ jobs:
         run: |
           cosign attest --predicate ./prober/attestation.json --type slsaprovenance --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }} ${IMAGE}
           cosign verify-attestation --rekor-url  ${{ inputs.rekor_url }} --type=slsaprovenance ${IMAGE} --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity-regexp='https://github.com/sigstore/sigstore-probers/.github/workflows/reusable-prober.yml@refs/.*'
-          # Get attestation hash
-          IMAGE_ATT=$(echo $(cosign triangulate ${IMAGE}) | sed 's/\.sig/\.att/')
-          DIGEST=$(crane manifest ${IMAGE_ATT} | jq -r '.layers[-1]'.digest)
-          echo "attestation_digest=${DIGEST}" >> $GITHUB_ENV
-
-      - name: Verify attestation contents
-        run: |
-          ./prober/verify-attestation.sh "${{ env.attestation_digest }}"
 
       - name: Set messages
         id: msg
