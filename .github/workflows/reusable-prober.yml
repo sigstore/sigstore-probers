@@ -60,7 +60,7 @@ jobs:
     outputs:
       sigstore_probe: ${{ steps.msg.outputs.sigstore_probe }}
     steps:
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
       - name: Set up Go
         id: setup-go
         uses: actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v3.3.0
@@ -110,9 +110,9 @@ jobs:
       root_state: ${{ steps.msg.outputs.root_state }}
     steps:
       - name: Checkout sigstore-probers code
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
       - name: Checkout root-signing to get roots
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
         with:
           repository: sigstore/root-signing
           ref: main
@@ -187,7 +187,7 @@ jobs:
       rekor_fulcio_e2e: ${{ steps.msg.outputs.rekor_fulcio_e2e }}
       skip_pagerduty: ${{ steps.set-skip-pagerduty.outputs.skip_pagerduty }}
     steps:
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
   
       # This server is often down, resulting in a lot of flaky probers
       # If the server is down, and this step fails, we don't alert PagerDuty
