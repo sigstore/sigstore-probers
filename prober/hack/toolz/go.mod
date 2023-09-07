@@ -7,7 +7,7 @@ require (
 	github.com/sigstore/cosign/v2 v2.2.0
 	github.com/sigstore/rekor v1.3.0
 	github.com/sigstore/root-signing v0.0.2-rc
-	github.com/sigstore/scaffolding v0.6.6
+	github.com/sigstore/scaffolding v0.6.7
 )
 
 require (
@@ -148,7 +148,7 @@ require (
 	github.com/google/rpmpack v0.5.0 // indirect
 	github.com/google/s2a-go v0.1.5 // indirect
 	github.com/google/trillian v1.5.2 // indirect
-	github.com/google/uuid v1.3.0 // indirect
+	github.com/google/uuid v1.3.1 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.5 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
@@ -226,7 +226,7 @@ require (
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
 	github.com/sigstore/fulcio v1.4.0 // indirect
 	github.com/sigstore/protobuf-specs v0.2.1 // indirect
-	github.com/sigstore/sigstore v1.7.2 // indirect
+	github.com/sigstore/sigstore v1.7.3 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/aws v1.7.2 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.7.2 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/gcp v1.7.2 // indirect
