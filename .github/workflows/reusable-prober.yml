@@ -167,6 +167,7 @@ jobs:
         if: success() || failure()
         run: |
           echo "root_state=good" >> $GITHUB_OUTPUT
+          if [ "${{ job.status }}" == 'failure' ]; then echo "root_state=failure" >> $GITHUB_OUTPUT; fi
 
   rekor-fulcio-e2e:
     timeout-minutes: 10
