@@ -138,8 +138,6 @@ jobs:
           make -C prober/ verify
           echo "PATH=$PATH:$PWD/prober/hack/toolz/bin" >> $GITHUB_ENV
 
-      # Uncomment the following when the new root signing is complete
-      # See https://github.com/sigstore/sigstore-probers/issues/112
       - name: Check expiration
         run: |
           if [ "${{ inputs.tuf_root_url }}" != "" ]; then
@@ -152,24 +150,24 @@ jobs:
           export EXPIRY=$(date -d '+2 days' '+%s')
           verify repository --repository ${{ inputs.tuf_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY}
 
+          export EXPIRY=$(date -d '+15 days' '+%s')
+          echo "Verifying root valid within 15 days..."
+          verify repository --repository ${{ inputs.tuf_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json
+
           # For preprod/staging TUF bucket
           export EXPIRY=$(date -d '+2 days' '+%s')
           verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY}
 
-      #     export EXPIRY=$(date -d '+15 days' '+%s')
-      #     echo "Verifying root valid within 15 days..."
-      #     verify repository --repository ${{ inputs.tuf_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json
+          export EXPIRY=$(date -d '+15 days' '+%s')
+          echo "Verifying root valid within 15 days..."
+          verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json
 
-      #     export EXPIRY=$(date -d '+15 days' '+%s')
-      #     echo "Verifying root valid within 15 days..."
-      #     verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json
-
-      # - name: Set messages
-      #   id: msg
-      #   if: success() || failure()
-      #   run: |
-      #     echo "root_state=good" >> $GITHUB_OUTPUT
-      #     if [ "${{ job.status }}" == 'failure' ]; then echo "root_state=failure" >> $GITHUB_OUTPUT; fi
+      - name: Set messages
+        id: msg
+        if: success() || failure()
+        run: |
+          echo "root_state=good" >> $GITHUB_OUTPUT
+          if [ "${{ job.status }}" == 'failure' ]; then echo "root_state=failure" >> $GITHUB_OUTPUT; fi
 
   rekor-fulcio-e2e:
     timeout-minutes: 10
