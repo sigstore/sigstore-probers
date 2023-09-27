@@ -138,6 +138,9 @@ jobs:
           make -C prober/ verify
           echo "PATH=$PATH:$PWD/prober/hack/toolz/bin" >> $GITHUB_ENV
 
+      # Temporarily disabling the expiry checks on preprod
+      # TODO put these back
+      # See https://github.com/sigstore/public-good-instance/issues/1684
       - name: Check expiration
         run: |
           if [ "${{ inputs.tuf_root_url }}" != "" ]; then
@@ -160,15 +163,15 @@ jobs:
           echo "::endgroup::"
 
           # For preprod/staging TUF bucket
-          echo "::group::tuf-preprod-repo-cdn 2 day check"
-          export EXPIRY=$(date -d '+2 days' '+%s')
-          verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY}
+          echo "::group::tuf-preprod-repo-cdn 2 day check - disabled"
+          #export EXPIRY=$(date -d '+2 days' '+%s')
+          #verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY}
           echo "::endgroup::"
 
-          echo "::group::tuf-preprod-repo-cdn 15 day check"
-          export EXPIRY=$(date -d '+15 days' '+%s')
-          echo "Verifying root valid within 15 days..."
-          verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json
+          echo "::group::tuf-preprod-repo-cdn 15 day check - disabled"
+          #export EXPIRY=$(date -d '+15 days' '+%s')
+          #echo "Verifying root valid within 15 days..."
+          #verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json
           echo "::endgroup::"
 
       - name: Set messages
