@@ -24,6 +24,10 @@ updates:
     directory: "./prober/ctlog"
     schedule:
       interval: "daily"
+  - package-ecosystem: "gomod"
+    directory: "./pager-duty"
+    schedule:
+      interval: "daily"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
