@@ -4,37 +4,37 @@ on:
   workflow_call:
     secrets:
       PAGERDUTY_INTEGRATION_KEY:
-        description: 'Integration key for PagerDuty'
+        description: "Integration key for PagerDuty"
         required: true
     inputs:
       rekor_url:
         required: false
         type: string
-        default: 'https://rekor.sigstore.dev'
-        description: 'Rekor URL'
+        default: "https://rekor.sigstore.dev"
+        description: "Rekor URL"
       fulcio_url:
         required: false
         type: string
-        default: 'https://fulcio.sigstore.dev'
-        description: 'Fulcio URL'
+        default: "https://fulcio.sigstore.dev"
+        description: "Fulcio URL"
       oidc_url:
         required: false
         type: string
-        default: 'https://oauth2.sigstore.dev/auth'
-        description: 'OIDC URL'
+        default: "https://oauth2.sigstore.dev/auth"
+        description: "OIDC URL"
       enable_staging:
         required: false
         type: boolean
       tuf_repo:
         required: false
         type: string
-        default: 'https://tuf-repo-cdn.sigstore.dev'
-        description: 'TUF Repo'
+        default: "https://tuf-repo-cdn.sigstore.dev"
+        description: "TUF Repo"
       tuf_preprod_repo:
         required: false
         type: string
-        default: 'https://tuf-preprod-repo-cdn.sigstore.dev'
-        description: 'TUF Repo'
+        default: "https://tuf-preprod-repo-cdn.sigstore.dev"
+        description: "TUF Repo"
       tuf_root_path:
         required: false
         type: string
@@ -44,7 +44,7 @@ on:
         required: false
         type: string
       triggerPagerDutyTest:
-        description: 'Trigger PagerDuty test message'
+        description: "Trigger PagerDuty test message"
         required: false
         type: string
 
@@ -52,7 +52,6 @@ permissions:
   contents: read
   id-token: write
 jobs:
-
   sigstore-probe:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -61,27 +60,14 @@ jobs:
       sigstore_probe: ${{ steps.msg.outputs.sigstore_probe }}
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - name: Set up Go
-        id: setup-go
-        uses: actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v3.3.0
-        with:
-          go-version-file: 'prober/hack/toolz/go.mod'
-          check-latest: true
-          cache: false
+      - uses: imjasonh/setup-crane@00c9e93efa4e1138c9a7a5c594acd6c75a2fbf0c # v0.3
 
-      - uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ steps.setup-go.outputs.go-version }}-${{ github.job }}-${{ hashFiles('prober/hack/toolz/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ steps.setup-go.outputs.go-version }}-${{ github.job }}-
-
-      - name: Install 'prober' from sigstore/scaffolding
+      - name: Copy probe from image
         run: |
-          make -C prober/ prober
-          echo "PATH=$PATH:$PWD/prober/hack/toolz/bin" >> $GITHUB_ENV
+          crane export $PROBE_IMAGE - | tar -xf - -C /tmp /ko-app/prober
+          cp /tmp/ko-app/prober /usr/local/bin
+        env:
+          PROBE_IMAGE: ghcr.io/sigstore/scaffolding/prober:v0.6.9@sha256:1b745626f5603698442ed55f4bdeb1a86f2192b603ccc3343750a3b70304ff94
 
       # Make sure rekor is up and we can get root info
       - name: Run prober
@@ -102,7 +88,6 @@ jobs:
           echo "sigstore_probe=good" >> $GITHUB_OUTPUT
           if [ "${{ job.status }}" == 'failure' ]; then echo "sigstore_probe=failure" >> $GITHUB_OUTPUT; fi
 
-
   root-probe:
     timeout-minutes: 10
     runs-on: ubuntu-latest
@@ -120,7 +105,7 @@ jobs:
       - uses: actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v3.3.0
         id: setup-go
         with:
-          go-version-file: 'prober/hack/toolz/go.mod'
+          go-version-file: "prober/hack/toolz/go.mod"
           check-latest: true
           cache: false
 
@@ -197,7 +182,7 @@ jobs:
       skip_pagerduty: ${{ steps.set-skip-pagerduty.outputs.skip_pagerduty }}
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-  
+
       # This server is often down, resulting in a lot of flaky probers
       # If the server is down, and this step fails, we don't alert PagerDuty
       - name: Confirm Github OIDC Server is Available
@@ -216,7 +201,7 @@ jobs:
       - uses: actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v3.3.0
         id: setup-go
         with:
-          go-version-file: 'prober/hack/toolz/go.mod'
+          go-version-file: "prober/hack/toolz/go.mod"
           check-latest: true
           cache: false
 
@@ -294,7 +279,6 @@ jobs:
         run: |
           rm -rf ~/.sigstore
       # END: PREPRODUCTION VERIFICATION
-
       - name: Initialize prod TUF root
         if: ${{ inputs.enable_staging == false }}
         run: |
