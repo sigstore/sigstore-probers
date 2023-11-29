@@ -382,5 +382,9 @@ jobs:
           {
             "href": "https://github.com/sigstore/public-good-instance/blob/main/playbooks/alerting/alerts/k8s-api-endpoint-prober.md",
             "text": "Prober Failure Playbook"
+          },
+          {
+            "href": "https://github.com/sigstore/public-good-instance/blob/main/playbooks/alerting/tuf.md",
+            "text": "Expiring TUF Metadata Playbook"
           }
         ]
