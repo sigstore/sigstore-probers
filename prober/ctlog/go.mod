@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/google/certificate-transparency-go v1.1.7
 	github.com/hashicorp/go-retryablehttp v0.7.5
-	github.com/sigstore/sigstore v1.7.5
+	github.com/sigstore/sigstore v1.7.6
 )
 
 require (
@@ -20,11 +20,11 @@ require (
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.7.0 // indirect
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/term v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/crypto v0.15.0 // indirect
+	golang.org/x/net v0.18.0 // indirect
+	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/term v0.14.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231016165738-49dd2c1f3d0b // indirect
 	google.golang.org/grpc v1.59.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
