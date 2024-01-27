@@ -18,7 +18,6 @@ runs:
 
           const reponame = context.repo.owner + "/" + context.repo.repo
           const title = `[bug]: Workflow failure '${context.workflow}'`
-          const workflow_file = path.basename(context.payload.workflow)
           const issues = await github.rest.search.issuesAndPullRequests({
             q:  `${title}+in:title+label:bug+state:open+type:issue+repo:${reponame}`,
           })
@@ -28,6 +27,7 @@ runs:
             repo: context.repo.repo,
             run_id: context.runId,
           })
+          const workflow_file = path.basename(run.data.path)
 
           if (issues.data.total_count == 0) {
             console.log("No issues found, exiting")
