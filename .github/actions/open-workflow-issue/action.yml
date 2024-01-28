@@ -19,6 +19,8 @@ runs:
   steps:
     - name: Create issue
       uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+      env:
+        COMMENT_FOR_EACH_FAILURE: ${{ inputs.comment_for_each_failure }}
       with:
         script: |
           var path = require('path');
@@ -29,6 +31,7 @@ runs:
           const issues = await github.rest.search.issuesAndPullRequests({
             q:  `${title}+in:title+label:bug+state:open+type:issue+repo:${reponame}`,
           })
+          comment_for_each_failure = process.env.COMMENT_FOR_EACH_FAILURE == "true"
 
           const run = await github.rest.actions.getWorkflowRun( {
             owner: context.repo.owner,
@@ -52,7 +55,7 @@ runs:
                 labels: ["bug"],
                 body: body,
               })
-          } else if (${{ inputs.comment_for_each_failure }}) {
+          } else if (comment_for_each_failure) {
             issue = issues.data.items[0].number
             console.log(`issue ${issue} found, adding a comment`)
             await github.rest.issues.createComment({
