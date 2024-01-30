@@ -3,7 +3,7 @@ module github.com/sigstore/sigstore-probers/prober/hack/toolz
 go 1.20
 
 require (
-	github.com/google/go-containerregistry v0.18.0
+	github.com/google/go-containerregistry v0.19.0
 	github.com/sigstore/cosign/v2 v2.2.2
 	github.com/sigstore/rekor v1.3.4
 	github.com/sigstore/root-signing v0.0.2-rc
