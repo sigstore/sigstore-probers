@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/google/go-containerregistry v0.19.0
-	github.com/sigstore/cosign/v2 v2.2.2
+	github.com/sigstore/cosign/v2 v2.2.3
 	github.com/sigstore/rekor v1.3.5
 	github.com/sigstore/root-signing v0.0.2-rc
 	github.com/sigstore/scaffolding v0.6.16
@@ -15,7 +15,8 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.5 // indirect
 	cloud.google.com/go/kms v1.15.5 // indirect
-	cuelang.org/go v0.6.0 // indirect
+	cuelabs.dev/go/oci/ociregistry v0.0.0-20231103182354-93e78c079a13 // indirect
+	cuelang.org/go v0.7.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/AliyunContainerService/ack-ram-tool/pkg/credentials/alibabacloudsdkgo/helper v0.2.0 // indirect
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible // indirect
@@ -71,8 +72,8 @@ require (
 	github.com/awslabs/amazon-ecr-credential-helper/ecr-login v0.0.0-20231024185945-8841054dbdb8 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
-	github.com/buildkite/agent/v3 v3.59.0 // indirect
-	github.com/buildkite/go-pipeline v0.2.0 // indirect
+	github.com/buildkite/agent/v3 v3.62.0 // indirect
+	github.com/buildkite/go-pipeline v0.3.2 // indirect
 	github.com/buildkite/interpolate v0.0.0-20200526001904-07f35b4ae251 // indirect
 	github.com/cavaliercoder/go-rpm v0.0.0-20200122174316-8cb9fd9c31a8 // indirect
 	github.com/cavaliergopher/cpio v1.0.1 // indirect
@@ -179,7 +180,7 @@ require (
 	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/oleiade/reflections v1.0.1 // indirect
-	github.com/open-policy-agent/opa v0.59.0 // indirect
+	github.com/open-policy-agent/opa v0.61.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0-rc5 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
@@ -216,7 +217,7 @@ require (
 	github.com/spf13/cobra v1.8.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.18.2 // indirect
-	github.com/spiffe/go-spiffe/v2 v2.1.6 // indirect
+	github.com/spiffe/go-spiffe/v2 v2.1.7 // indirect
 	github.com/stretchr/objx v0.5.1 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
@@ -231,7 +232,7 @@ require (
 	github.com/veraison/go-cose v1.2.0 // indirect
 	github.com/withfig/autocomplete-tools/integrations/cobra v1.2.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	github.com/xanzy/go-gitlab v0.94.0 // indirect
+	github.com/xanzy/go-gitlab v0.96.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/yashtewari/glob-intersection v0.2.0 // indirect
@@ -243,7 +244,7 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.47.0 // indirect
 	go.opentelemetry.io/otel v1.22.0 // indirect
 	go.opentelemetry.io/otel/metric v1.22.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.21.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.22.0 // indirect
 	go.opentelemetry.io/otel/trace v1.22.0 // indirect
 	go.step.sm/crypto v0.42.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
