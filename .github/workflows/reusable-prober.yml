@@ -205,7 +205,7 @@ jobs:
       skip_pagerduty: ${{ steps.set-skip-pagerduty.outputs.skip_pagerduty }}
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-  
+
       # This server is often down, resulting in a lot of flaky probers
       # If the server is down, and this step fails, we don't alert PagerDuty
       - name: Confirm Github OIDC Server is Available

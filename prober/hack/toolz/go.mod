@@ -1,6 +1,6 @@
 module github.com/sigstore/sigstore-probers/prober/hack/toolz
 
-go 1.20
+go 1.21
 
 require (
 	github.com/google/go-containerregistry v0.19.0
@@ -98,6 +98,7 @@ require (
 	github.com/docker/docker-credential-helpers v0.8.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/emicklei/proto v1.12.1 // indirect
+	github.com/fatih/color v1.16.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.4.0 // indirect
