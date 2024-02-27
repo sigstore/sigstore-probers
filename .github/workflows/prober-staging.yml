@@ -21,7 +21,6 @@ jobs:
     uses: ./.github/workflows/reusable-prober.yml
     secrets:
       PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
-      sigstore_github_token: ${{ secrets.SIGSTORE_BOT_PAT }}
     permissions:
       id-token: write
       contents: read
