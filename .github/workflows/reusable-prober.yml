@@ -6,9 +6,6 @@ on:
       PAGERDUTY_INTEGRATION_KEY:
         description: 'Integration key for PagerDuty'
         required: true
-      sigstore_github_token:
-        description: 'Personal Access Token for GitHub. Must have permission to create issues with labels in the repo specified in github_issues_repo.'
-        required: true
     inputs:
       rekor_url:
         required: false
@@ -402,20 +399,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: [sigstore-probe, root-probe, rekor-fulcio-e2e, compute-summary-msg]
     steps:
-      - uses: actions-ecosystem/action-create-issue@b02a3c1d9d929a5839315bd255e40389f0dab627 # v1.0.0
-        with:
-          github_token: ${{ secrets.sigstore_github_token }}
-          repo: ${{ inputs.github_issues_repo }}
-          title: "[ALERT][${{ needs.compute-summary-msg.outputs.group }}] Prober Failed"
-          body: |
-            Environment: ${{ needs.compute-summary-msg.outputs.group }}
-            Failure URL: https://github.com/sigstore/sigstore-probers/actions/runs/${{ github.run_id }}
-            Commit: ${{ github.sha }}
-            Prober: ${{ needs.sigstore-probe.outputs.sigstore_probe }}
-            GCS Root: ${{ needs.root-probe.outputs.root_state }}
-            Rekor Fulcio E2E Test: ${{ needs.rekor-fulcio-e2e.outputs.rekor_fulcio_e2e }}
-          labels: |
-            needs-assignee
-            alert
-            oncall
-            ${{ inputs.enable_staging && 'env:staging' || 'env:production' }}
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat << 'EOF' | gh issue create --repo ${{ inputs.github_issues_repo }} --title "[ALERT][${{ needs.compute-summary-msg.outputs.group }}] Prober Failed" --label "alert,needs-assignee,oncall,${{ inputs.enable_staging && 'env:staging' || 'env:production' }}" -F -
+          Environment: ${{ needs.compute-summary-msg.outputs.group }}
+          Failure URL: https://github.com/sigstore/sigstore-probers/actions/runs/${{ github.run_id }}
+          Commit: ${{ github.sha }}
+          Prober: ${{ needs.sigstore-probe.outputs.sigstore_probe }}
+          GCS Root: ${{ needs.root-probe.outputs.root_state }}
+          Rekor Fulcio E2E Test: ${{ needs.rekor-fulcio-e2e.outputs.rekor_fulcio_e2e }}
+          EOF
