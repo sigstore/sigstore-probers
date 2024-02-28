@@ -399,7 +399,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [sigstore-probe, root-probe, rekor-fulcio-e2e, compute-summary-msg]
     steps:
-      - run: |
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
           cat << 'EOF' | gh issue create --repo ${{ inputs.github_issues_repo }} --title "[ALERT][${{ needs.compute-summary-msg.outputs.group }}] Prober Failed" --label "alert,needs-assignee,oncall,${{ inputs.enable_staging && 'env:staging' || 'env:production' }}" -F -
           Environment: ${{ needs.compute-summary-msg.outputs.group }}
           Failure URL: https://github.com/sigstore/sigstore-probers/actions/runs/${{ github.run_id }}
