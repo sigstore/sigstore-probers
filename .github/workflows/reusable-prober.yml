@@ -158,9 +158,9 @@ jobs:
           verify repository --repository ${{ inputs.tuf_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY}
           echo "::endgroup::"
 
-          echo "::group::tuf-repo-cdn 7 day check"
-          export EXPIRY=$(date -d '+7 days' '+%s')
-          echo "Verifying root valid within 7 days..."
+          echo "::group::tuf-repo-cdn 3 day check"
+          export EXPIRY=$(date -d '+3 days' '+%s')
+          echo "Verifying root valid within 3 days..."
           verify repository --repository ${{ inputs.tuf_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json
           echo "::endgroup::"
 
@@ -170,9 +170,9 @@ jobs:
           verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY}
           echo "::endgroup::"
 
-          echo "::group::tuf-preprod-repo-cdn 7 day check"
-          export EXPIRY=$(date -d '+7 days' '+%s')
-          echo "Verifying root valid within 7 days..."
+          echo "::group::tuf-preprod-repo-cdn 3 day check"
+          export EXPIRY=$(date -d '+3 days' '+%s')
+          echo "Verifying root valid within 3 days..."
           verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json
           echo "::endgroup::"
 
