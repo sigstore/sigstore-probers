@@ -6,7 +6,7 @@ require (
 	github.com/google/go-containerregistry v0.19.1
 	github.com/sigstore/cosign/v2 v2.2.3
 	github.com/sigstore/rekor v1.3.5
-	github.com/sigstore/root-signing v0.0.2-rc.0.20240319211044-597fb928ae15
+	github.com/sigstore/root-signing v0.0.3
 	github.com/sigstore/scaffolding v0.6.17
 )
 
