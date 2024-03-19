@@ -6,7 +6,7 @@ require (
 	github.com/google/go-containerregistry v0.19.1
 	github.com/sigstore/cosign/v2 v2.2.3
 	github.com/sigstore/rekor v1.3.5
-	github.com/sigstore/root-signing v0.0.2-rc
+	github.com/sigstore/root-signing v0.0.2-rc.0.20240319211044-597fb928ae15
 	github.com/sigstore/scaffolding v0.6.17
 )
 
@@ -14,7 +14,7 @@ require (
 	cloud.google.com/go/compute v1.23.4 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.6 // indirect
-	cloud.google.com/go/kms v1.15.6 // indirect
+	cloud.google.com/go/kms v1.15.7 // indirect
 	cuelabs.dev/go/oci/ociregistry v0.0.0-20231103182354-93e78c079a13 // indirect
 	cuelang.org/go v0.7.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
@@ -23,7 +23,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.9.2 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.5.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.5.2 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys v1.0.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys v1.1.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal v1.0.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
@@ -155,7 +155,7 @@ require (
 	github.com/in-toto/in-toto-golang v0.9.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jedisct1/go-minisign v0.0.0-20230811132847-661be99b8267 // indirect
-	github.com/jellydator/ttlcache/v3 v3.1.1 // indirect
+	github.com/jellydator/ttlcache/v3 v3.2.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -204,8 +204,8 @@ require (
 	github.com/sigstore/protobuf-specs v0.2.1 // indirect
 	github.com/sigstore/sigstore v1.8.2 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/aws v1.8.1 // indirect
-	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.8.1 // indirect
-	github.com/sigstore/sigstore/pkg/signature/kms/gcp v1.8.1 // indirect
+	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.8.2 // indirect
+	github.com/sigstore/sigstore/pkg/signature/kms/gcp v1.8.2 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/hashivault v1.8.1 // indirect
 	github.com/sigstore/timestamp-authority v1.2.2 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
@@ -254,8 +254,8 @@ require (
 	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/oauth2 v0.17.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
-	golang.org/x/term v0.17.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/term v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.16.1 // indirect

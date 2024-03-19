@@ -113,6 +113,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       root_state: ${{ steps.msg.outputs.root_state }}
+      dedup_key: ${{ steps.check.outputs.dedup_key }}
     steps:
       - name: Checkout sigstore-probers code
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
@@ -144,6 +145,7 @@ jobs:
           echo "PATH=$PATH:$PWD/prober/hack/toolz/bin" >> $GITHUB_ENV
 
       - name: Check expiration
+        id: check
         run: |
           if [ "${{ inputs.tuf_root_url }}" != "" ]; then
             echo "::warning::fetching root.json from ${{ inputs.tuf_root_url }}"
@@ -152,28 +154,29 @@ jobs:
           else
             export ROOT_PATH=$GITHUB_WORKSPACE/root-signing/${{ inputs.tuf_root_path }}
           fi
+          export PD_DEDUP_KEY_FILE=$(mktemp)
 
-          echo "::group::tuf-repo-cdn 2 day check"
-          export EXPIRY=$(date -d '+2 days' '+%s')
-          verify repository --repository ${{ inputs.tuf_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY}
+          echo "::group::tuf-repo-cdn 21 day check"
+          export EXPIRY=$(date -d '+21 days' '+%s')
+          verify repository --repository ${{ inputs.tuf_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --dedup-key-file ${PD_DEDUP_KEY_FILE} || echo "dedup_key=$(cat ${PD_DEDUP_KEY_FILE})" >> $GITHUB_OUTPUT
           echo "::endgroup::"
 
           echo "::group::tuf-repo-cdn 15 day check"
           export EXPIRY=$(date -d '+15 days' '+%s')
           echo "Verifying root valid within 15 days..."
-          verify repository --repository ${{ inputs.tuf_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json
+          verify repository --repository ${{ inputs.tuf_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json --dedup-key-file ${PD_DEDUP_KEY_FILE} || echo "dedup_key=$(cat ${PD_DEDUP_KEY_FILE})" >> $GITHUB_OUTPUT
           echo "::endgroup::"
 
           # For preprod/staging TUF bucket
           echo "::group::tuf-preprod-repo-cdn 2 day check"
           export EXPIRY=$(date -d '+2 days' '+%s')
-          verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY}
+          verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --dedup-key-file ${PD_DEDUP_KEY_FILE} || echo "dedup_key=$(cat ${PD_DEDUP_KEY_FILE})" >> $GITHUB_OUTPUT
           echo "::endgroup::"
 
           echo "::group::tuf-preprod-repo-cdn 15 day check"
           export EXPIRY=$(date -d '+15 days' '+%s')
           echo "Verifying root valid within 15 days..."
-          verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json
+          verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json --dedup-key-file ${PD_DEDUP_KEY_FILE} || echo "dedup_key=$(cat ${PD_DEDUP_KEY_FILE})" >> $GITHUB_OUTPUT
           echo "::endgroup::"
 
       - name: Set messages
@@ -373,6 +376,7 @@ jobs:
       summary: ${{ needs.compute-summary-msg.outputs.summary }}
       component: "health prober"
       group: ${{ needs.compute-summary-msg.outputs.group }}
+      dedup_key: "${{ needs.root-probe.outputs.dedup_key }}"
       details: >
         {
           "Environment": "${{ needs.compute-summary-msg.outputs.group }}",
