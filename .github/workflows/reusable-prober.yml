@@ -161,9 +161,9 @@ jobs:
           verify repository --repository ${{ inputs.tuf_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --dedup-key-file ${PD_DEDUP_KEY_FILE} || echo "dedup_key=$(cat ${PD_DEDUP_KEY_FILE})" >> $GITHUB_OUTPUT
           echo "::endgroup::"
 
-          echo "::group::tuf-repo-cdn 7 day check"
-          export EXPIRY=$(date -d '+7 days' '+%s')
-          echo "Verifying root valid within 7 days..."
+          echo "::group::tuf-repo-cdn 15 day check"
+          export EXPIRY=$(date -d '+15 days' '+%s')
+          echo "Verifying root valid within 15 days..."
           verify repository --repository ${{ inputs.tuf_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json --dedup-key-file ${PD_DEDUP_KEY_FILE} || echo "dedup_key=$(cat ${PD_DEDUP_KEY_FILE})" >> $GITHUB_OUTPUT
           echo "::endgroup::"
 
@@ -173,9 +173,9 @@ jobs:
           verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --dedup-key-file ${PD_DEDUP_KEY_FILE} || echo "dedup_key=$(cat ${PD_DEDUP_KEY_FILE})" >> $GITHUB_OUTPUT
           echo "::endgroup::"
 
-          echo "::group::tuf-preprod-repo-cdn 7 day check"
-          export EXPIRY=$(date -d '+7 days' '+%s')
-          echo "Verifying root valid within 7 days..."
+          echo "::group::tuf-preprod-repo-cdn 15 day check"
+          export EXPIRY=$(date -d '+15 days' '+%s')
+          echo "Verifying root valid within 15 days..."
           verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json --dedup-key-file ${PD_DEDUP_KEY_FILE} || echo "dedup_key=$(cat ${PD_DEDUP_KEY_FILE})" >> $GITHUB_OUTPUT
           echo "::endgroup::"
 
