@@ -15,6 +15,10 @@ on:
         description: 'A brief text summary of the event, used to generate the summaries/titles of any associated alerts. The maximum permitted length of this property is 1024 characters.'
         default: 'unknown'
         type: string
+      dedup_key:
+        description: 'Deduplication key for correlating triggers and resolves. The maximum permitted length of this property is 255 characters.'
+        default: ''
+        type: string
       source:
         description: 'The unique location of the affected system, preferably a hostname or FQDN.'
         default: 'GitHub Actions Prober'
@@ -89,6 +93,7 @@ jobs:
           {
             "summary": "${{ inputs.summary }}",
             "source": "${{ inputs.source }}",
+            "dedup_key": "${{ inputs.dedup_key }}",
             "severity": "${{ inputs.severity }}",
             "component": "${{ inputs.component }}",
             "group": "${{ inputs.group }}"${{ steps.detailsAndLinks.outputs.result }}
