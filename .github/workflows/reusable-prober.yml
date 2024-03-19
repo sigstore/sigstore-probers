@@ -156,8 +156,8 @@ jobs:
           fi
           export PD_DEDUP_KEY_FILE=$(mktemp)
 
-          echo "::group::tuf-repo-cdn 2 day check"
-          export EXPIRY=$(date -d '+2 days' '+%s')
+          echo "::group::tuf-repo-cdn 21 day check"
+          export EXPIRY=$(date -d '+21 days' '+%s')
           verify repository --repository ${{ inputs.tuf_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --dedup-key-file ${PD_DEDUP_KEY_FILE} || echo "dedup_key=$(cat ${PD_DEDUP_KEY_FILE})" >> $GITHUB_OUTPUT
           echo "::endgroup::"
 
