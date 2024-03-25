@@ -43,6 +43,7 @@ type inputStruct struct {
 	Severity  string                 `json:"severity" validate:"required,oneof=critical error warning info"`
 	Component string                 `json:"component" validate:"required"`
 	Group     string                 `json:"group" validate:"required"`
+	DedupKey  string                 `json:"dedup_key,omitempty"`
 	Details   map[string]interface{} `json:"details,omitempty"`
 	Links     []linkStruct           `json:"links,omitempty" validate:"dive"`
 }
@@ -113,6 +114,9 @@ func execute() error {
 	}
 	if input.Details != nil {
 		event.Payload.Details = input.Details
+	}
+	if input.DedupKey != "" {
+		event.DedupKey = input.DedupKey
 	}
 	if len(input.Links) > 0 {
 		listOfLinks := make([]interface{}, len(input.Links))
