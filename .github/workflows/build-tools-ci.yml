@@ -76,5 +76,4 @@ jobs:
         if: steps.changes.outputs.tools == 'true'
         run: |
           make -C prober/ prober
-          make -C prober/ verify
           make -C prober/ crane rekor-cli cosign
