@@ -222,15 +222,13 @@ jobs:
       # START: PREPRODUCTION VERIFICATION
       # TODO: Create a matrix (https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs)
       #       to reduce duplication
-      # Test the preproduction bucket only for prod
 
       # Test that initialize works from prod to preprod
       - name: Initialize prod TUF root
-        if: ${{ inputs.enable_staging == false }}
         run: |
           for i in {1..5}
           do
-            if cosign initialize; then
+            if cosign initialize --mirror=${{ inputs.tuf_repo }} --root=${{ inputs.tuf_root_path }}; then
               echo "Successfully initialized" && exit 0
             else
               echo "Failed to initialize" && sleep 10
@@ -238,7 +236,6 @@ jobs:
           done
 
       - name: Initialize preprod TUF root
-        if: ${{ inputs.enable_staging == false }}
         run: |
           for i in {1..5}
           do
@@ -251,13 +248,11 @@ jobs:
 
       # Test signing in preproduction
       - name: Sign and verify the image with preprod TUF
-        if: ${{ inputs.enable_staging == false }}
         run: |
           cosign sign --yes ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }} --oidc-provider github-actions
           cosign verify ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity-regexp='https://github.com/sigstore/sigstore-probers/.github/workflows/reusable-prober.yml@refs/.*'
 
       - name: Remove preprod TUF
-        if: ${{ inputs.enable_staging == false }}
         run: |
           rm -rf ~/.sigstore
       # END: PREPRODUCTION VERIFICATION
