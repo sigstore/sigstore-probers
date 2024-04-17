@@ -22,5 +22,4 @@ jobs:
     secrets:
       PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
     with:
-      tuf_root_path: "ceremony/2022-05-10/repository/root.json"
       triggerPagerDutyTest: ${{ github.event.inputs.triggerPagerDutyTest }}

@@ -38,11 +38,8 @@ on:
       tuf_root_path:
         required: false
         type: string
-        default: "root.json"
+        default: ".github/assets/sigstore.root.json"
         description: "path to the tuf root"
-      tuf_root_url:
-        required: false
-        type: string
       triggerPagerDutyTest:
         description: 'Trigger PagerDuty test message'
         required: false
@@ -113,76 +110,39 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       root_state: ${{ steps.msg.outputs.root_state }}
-      dedup_key: ${{ steps.check.outputs.dedup_key }}
+      dedup_key: ${{ steps.msg.outputs.dedup_key }}
     steps:
-      - name: Checkout sigstore-probers code
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
-      - name: Checkout root-signing to get roots
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+
+      - name: Set initial root.json
+        run: cp "${{ inputs.tuf_root_path }}" ./root.json
+
+      - name: Verify TUF repository state
+        uses: theupdateframework/tuf-on-ci/actions/test-repository@ebf63d46b20e8c019e7752f8fb57c28931f96cfc # v0.9.0
         with:
-          repository: sigstore/root-signing
-          ref: main
-          path: root-signing
-      - uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v3.3.0
-        id: setup-go
+          metadata_url: ${{ inputs.tuf_repo }}
+          valid_days: 2
+          offline_valid_days: 15
+          metadata_dir: tuf/prod/
+          compare_source: false
+
+      - name: Verify preprod TUF repository state (and the upgrade from prod)
+        uses: theupdateframework/tuf-on-ci/actions/test-repository@ebf63d46b20e8c019e7752f8fb57c28931f96cfc # v0.9.0
         with:
-          go-version-file: 'prober/hack/toolz/go.mod'
-          check-latest: true
-          cache: false
-
-      - uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ steps.setup-go.outputs.go-version }}-${{ github.job }}-${{ hashFiles('prober/hack/toolz/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ steps.setup-go.outputs.go-version }}-${{ github.job }}-
-
-      - name: Install 'verify' tool from sigstore/root-signing
-        run: |
-          make -C prober/ verify
-          echo "PATH=$PATH:$PWD/prober/hack/toolz/bin" >> $GITHUB_ENV
-
-      - name: Check expiration
-        id: check
-        run: |
-          if [ "${{ inputs.tuf_root_url }}" != "" ]; then
-            echo "::warning::fetching root.json from ${{ inputs.tuf_root_url }}"
-            curl -Lo root.json --user-agent "sigstore-prober" ${{ inputs.tuf_root_url }}
-            export ROOT_PATH=root.json
-          else
-            export ROOT_PATH=$GITHUB_WORKSPACE/root-signing/${{ inputs.tuf_root_path }}
-          fi
-          export PD_DEDUP_KEY_FILE=$(mktemp)
-
-          echo "::group::tuf-repo-cdn 2 day check"
-          export EXPIRY=$(date -d '+2 days' '+%s')
-          verify repository --repository ${{ inputs.tuf_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --dedup-key-file ${PD_DEDUP_KEY_FILE} || (echo "dedup_key=$(cat ${PD_DEDUP_KEY_FILE})" >> $GITHUB_OUTPUT ; exit 1)
-          echo "::endgroup::"
-
-          echo "::group::tuf-repo-cdn 15 day check"
-          export EXPIRY=$(date -d '+15 days' '+%s')
-          echo "Verifying root valid within 15 days..."
-          verify repository --repository ${{ inputs.tuf_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json --dedup-key-file ${PD_DEDUP_KEY_FILE} || (echo "dedup_key=$(cat ${PD_DEDUP_KEY_FILE})" >> $GITHUB_OUTPUT ; exit 1)
-          echo "::endgroup::"
-
-          # For preprod/staging TUF bucket
-          echo "::group::tuf-preprod-repo-cdn 2 day check"
-          export EXPIRY=$(date -d '+2 days' '+%s')
-          verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --dedup-key-file ${PD_DEDUP_KEY_FILE} || (echo "dedup_key=$(cat ${PD_DEDUP_KEY_FILE})" >> $GITHUB_OUTPUT ; exit 1)
-          echo "::endgroup::"
-
-          echo "::group::tuf-preprod-repo-cdn 15 day check"
-          export EXPIRY=$(date -d '+15 days' '+%s')
-          echo "Verifying root valid within 15 days..."
-          verify repository --repository ${{ inputs.tuf_preprod_repo }} --root ${ROOT_PATH} --valid-until ${EXPIRY} --role root.json --role targets.json --dedup-key-file ${PD_DEDUP_KEY_FILE} || (echo "dedup_key=$(cat ${PD_DEDUP_KEY_FILE})" >> $GITHUB_OUTPUT ; exit 1)
-          echo "::endgroup::"
+          metadata_url: ${{ inputs.tuf_preprod_repo }}
+          update_base_url:  ${{ inputs.tuf_repo }}
+          valid_days: 2
+          offline_valid_days: 15
+          metadata_dir: tuf/preprod/
+          compare_source: false
 
       - name: Set messages
         id: msg
         if: success() || failure()
         run: |
+          # calculate a dedup key based on all TUF metadata the test client saw
+          echo "dedup_key=$(sha256sum tuf/*/* | sha256sum | cut -d " " -f 1)" >> $GITHUB_OUTPUT
+
           echo "root_state=good" >> $GITHUB_OUTPUT
           if [ "${{ job.status }}" == 'failure' ]; then echo "root_state=failure" >> $GITHUB_OUTPUT; fi
 
@@ -280,10 +240,9 @@ jobs:
       - name: Initialize preprod TUF root
         if: ${{ inputs.enable_staging == false }}
         run: |
-          curl -Lo root.json --user-agent "sigstore-prober" ${{ inputs.tuf_preprod_repo }}/root.json
           for i in {1..5}
           do
-            if cosign initialize --mirror=${{ inputs.tuf_preprod_repo }} --root=root.json; then
+            if cosign initialize --mirror=${{ inputs.tuf_preprod_repo }} --root=${{ inputs.tuf_root_path }}; then
               echo "Successfully initialized" && exit 0
             else
               echo "Failed to initialize" && sleep 10
@@ -303,25 +262,11 @@ jobs:
           rm -rf ~/.sigstore
       # END: PREPRODUCTION VERIFICATION
 
-      - name: Initialize prod TUF root
-        if: ${{ inputs.enable_staging == false }}
+      - name: Initialize TUF root
         run: |
           for i in {1..5}
           do
-            if cosign initialize; then
-              echo "Successfully initialized" && exit 0
-            else
-              echo "Failed to initialize" && sleep 10
-            fi
-          done
-
-      - name: Initialize staging TUF root
-        if: ${{ inputs.enable_staging }}
-        run: |
-          curl -Lo root.json ${{ inputs.tuf_root_url }}
-          for i in {1..5}
-          do
-            if cosign initialize --mirror=${{ inputs.tuf_repo }} --root=root.json; then
+            if cosign initialize --mirror=${{ inputs.tuf_repo }} --root=${{ inputs.tuf_root_path }}; then
               echo "Successfully initialized" && exit 0
             else
               echo "Failed to initialize" && sleep 10
