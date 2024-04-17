@@ -159,6 +159,7 @@ jobs:
       GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
       IMAGE: localhost:1338/image:${{ github.sha }}-${{ github.run_id }}
       REKOR_SERVER: ${{ inputs.rekor_url }}
+      IDENTITY_REGEX: ${{ github.server_url }}/${{ github.repository }}/.github/workflows/reusable-prober.yml@refs/.*
     runs-on: ubuntu-latest
     outputs:
       rekor_fulcio_e2e: ${{ steps.msg.outputs.rekor_fulcio_e2e }}
@@ -250,7 +251,7 @@ jobs:
       - name: Sign and verify the image with preprod TUF
         run: |
           cosign sign --yes ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }} --oidc-provider github-actions
-          cosign verify ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity-regexp='https://github.com/sigstore/sigstore-probers/.github/workflows/reusable-prober.yml@refs/.*'
+          cosign verify ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity-regexp="$IDENTITY_REGEX"
 
       - name: Remove preprod TUF
         run: |
@@ -272,12 +273,12 @@ jobs:
       - name: Sign and verify the image
         run: |
           cosign sign --yes ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }} --oidc-provider github-actions
-          cosign verify ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity-regexp='https://github.com/sigstore/sigstore-probers/.github/workflows/reusable-prober.yml@refs/.*'
+          cosign verify ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity-regexp="$IDENTITY_REGEX"
 
       - name: Generate and upload attestation
         run: |
           cosign attest --predicate ./prober/attestation.json --type slsaprovenance --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }} ${IMAGE}
-          cosign verify-attestation --rekor-url  ${{ inputs.rekor_url }} --type=slsaprovenance ${IMAGE} --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity-regexp='https://github.com/sigstore/sigstore-probers/.github/workflows/reusable-prober.yml@refs/.*'
+          cosign verify-attestation --rekor-url  ${{ inputs.rekor_url }} --type=slsaprovenance ${IMAGE} --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity-regexp="$IDENTITY_REGEX"
 
       - name: Set messages
         id: msg
