@@ -598,8 +598,6 @@ github.com/sigstore/protobuf-specs v0.3.0 h1:E49qS++llp4psM+3NNVEb+C4AD422bT9VkO
 github.com/sigstore/protobuf-specs v0.3.0/go.mod h1:ynKzXpqr3dUj2Xk9O/5ZUhjnpi0F53DNi5AdH6pS3jc=
 github.com/sigstore/rekor v1.3.6 h1:QvpMMJVWAp69a3CHzdrLelqEqpTM3ByQRt5B5Kspbi8=
 github.com/sigstore/rekor v1.3.6/go.mod h1:JDTSNNMdQ/PxdsS49DJkJ+pRJCO/83nbR5p3aZQteXc=
-github.com/sigstore/root-signing v0.0.3 h1:xV6jAvxHZlEW5M8IY0440cwNj2LFNiPoXNTqYDXVp0g=
-github.com/sigstore/root-signing v0.0.3/go.mod h1:3Fd/q94KMMJaiHnBfWvV7kLcJkbu+DZn9v68NgqsP20=
 github.com/sigstore/scaffolding v0.6.17 h1:60P4/x/PdIj7SjzhEgEDefrnDcHAKzztF/RXddjZGQ8=
 github.com/sigstore/scaffolding v0.6.17/go.mod h1:jTrLu0YmR5pfQDBieDpn97GSqAPHBAvgjzk8iUNGVjo=
 github.com/sigstore/sigstore v1.8.3 h1:G7LVXqL+ekgYtYdksBks9B38dPoIsbscjQJX/MGWkA4=
