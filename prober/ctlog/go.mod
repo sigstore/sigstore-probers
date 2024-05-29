@@ -1,9 +1,10 @@
 module github.com/sigstore/sigstore-probers/prober/ctlog
 
 go 1.21
+toolchain go1.22.2
 
 require (
-	github.com/google/certificate-transparency-go v1.1.8
+	github.com/google/certificate-transparency-go v1.2.0
 	github.com/hashicorp/go-retryablehttp v0.7.6
 	github.com/sigstore/sigstore v1.8.4
 )
