@@ -18,17 +18,23 @@ version: 2
 updates:
   - package-ecosystem: "gomod"
     directory: "./prober/hack/toolz"
+    directories:
+      - "./pager-duty"
+      - "./prober/ctlog"
+      - "./prober/hack/toolz"
     schedule:
       interval: "daily"
-  - package-ecosystem: "gomod"
-    directory: "./prober/ctlog"
-    schedule:
-      interval: "daily"
-  - package-ecosystem: "gomod"
-    directory: "./pager-duty"
-    schedule:
-      interval: "daily"
+    groups:
+      gomod:
+        update-types:
+          - "patch"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "daily"
+    groups:
+      actions:
+        update-types:
+          - "minor"
+          - "patch"
