@@ -17,7 +17,6 @@
 version: 2
 updates:
   - package-ecosystem: "gomod"
-    directory: "./prober/hack/toolz"
     directories:
       - "./pager-duty"
       - "./prober/ctlog"
