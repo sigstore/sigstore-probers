@@ -118,7 +118,7 @@ jobs:
         run: cp "${{ inputs.tuf_root_path }}" ./root.json
 
       - name: Verify TUF repository state
-        uses: theupdateframework/tuf-on-ci/actions/test-repository@a486e2d6fcf93af4cb0f479e6a280f34125647d6 # v0.10.0
+        uses: theupdateframework/tuf-on-ci/actions/test-repository@95dc66aba6102bbe911ef93c69395ff62ed69bd4 # v0.11.0
         with:
           metadata_url: ${{ inputs.tuf_repo }}
           valid_days: 2
@@ -128,7 +128,7 @@ jobs:
 
       - name: Verify preprod TUF repository state (and the upgrade from prod)
         if: ${{ inputs.enable_staging == false }}
-        uses: theupdateframework/tuf-on-ci/actions/test-repository@a486e2d6fcf93af4cb0f479e6a280f34125647d6 # v0.10.0
+        uses: theupdateframework/tuf-on-ci/actions/test-repository@95dc66aba6102bbe911ef93c69395ff62ed69bd4 # v0.11.0
         with:
           metadata_url: ${{ inputs.tuf_preprod_repo }}
           update_base_url:  ${{ inputs.tuf_repo }}
