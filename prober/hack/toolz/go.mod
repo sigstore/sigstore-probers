@@ -6,7 +6,7 @@ require (
 	github.com/google/go-containerregistry v0.20.1
 	github.com/sigstore/cosign/v2 v2.3.0
 	github.com/sigstore/rekor v1.3.6
-	github.com/sigstore/scaffolding v0.7.4
+	github.com/sigstore/scaffolding v0.7.5
 )
 
 require (
@@ -273,9 +273,9 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.30.2 // indirect
-	k8s.io/apimachinery v0.30.2 // indirect
-	k8s.io/client-go v0.30.2 // indirect
+	k8s.io/api v0.30.3 // indirect
+	k8s.io/apimachinery v0.30.3 // indirect
+	k8s.io/client-go v0.30.3 // indirect
 	k8s.io/klog/v2 v2.120.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
 	k8s.io/utils v0.0.0-20240502163921-fe8a2dddb1d0 // indirect
