@@ -209,9 +209,11 @@ jobs:
       - uses: chainguard-dev/actions/setup-registry@main
 
       # uses container already cached on runner image to avoid rate limits and network flakes
+      # this assumes that an alpine image is cached, and doesn't care which tag it uses - this
+      # hopefully prevents us from having a page to update a tag ref
       - name: Build and copy a container image
         run: |
-          docker tag alpine:3.17 ${IMAGE}
+          docker tag $(docker images --format "{{.Repository}}:{{.Tag}}" -f "reference=alpine*" | head -1) ${IMAGE}
           docker push ${IMAGE}
 
       # START: PREPRODUCTION VERIFICATION:
