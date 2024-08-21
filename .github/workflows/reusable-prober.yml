@@ -199,27 +199,22 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-${{ steps.setup-go.outputs.go-version }}-${{ github.job }}-
 
-      # Install crane / rekor-cli / cosign tools
-      - name: Install (crane, rekor-cli, cosign) tools
+      # Install rekor-cli / cosign tools
+      - name: Install (rekor-cli, cosign) tools
         run: |
-          make -C prober/ crane rekor-cli cosign
+          make -C prober/ rekor-cli cosign
           echo "PATH=$PATH:$PWD/prober/hack/toolz/bin" >> $GITHUB_ENV
 
       # Setup the registry on port 1338
       - uses: chainguard-dev/actions/setup-registry@main
 
+      # uses container already cached on runner image to avoid rate limits and network flakes
+      # this assumes that an alpine image is cached, and doesn't care which tag it uses - this
+      # hopefully prevents us from having a page to update a tag ref
       - name: Build and copy a container image
-        continue-on-error: true
         run: |
-          for i in {1..5}
-          do
-            if crane cp busybox@sha256:d2b53584f580310186df7a2055ce3ff83cc0df6caacf1e3489bff8cf5d0af5d8 ${IMAGE}; then
-              echo "Successfully copied image" && exit 0
-            else
-              echo "Failed to copy image ${IMAGE}" && sleep 10
-            fi
-          done
-          exit 1
+          docker tag $(docker images --format "{{.Repository}}:{{.Tag}}" -f "reference=alpine*" | head -1) ${IMAGE}
+          docker push ${IMAGE}
 
       # START: PREPRODUCTION VERIFICATION:
       #   * "Upgrade" cosign from prod to preprod TUF; sign and verify
