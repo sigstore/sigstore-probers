@@ -122,7 +122,7 @@ jobs:
         with:
           metadata_url: ${{ inputs.tuf_repo }}
           valid_days: 2
-          offline_valid_days: 15
+          offline_valid_days: 7
           metadata_dir: tuf/prod/
           compare_source: false
 
