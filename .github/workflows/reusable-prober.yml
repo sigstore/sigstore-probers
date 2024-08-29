@@ -33,8 +33,8 @@ on:
       tuf_preprod_repo:
         required: false
         type: string
-        default: 'https://tuf-preprod-repo-cdn.sigstore.dev'
-        description: 'TUF Repo'
+        default: 'https://sigstore.github.io/root-signing'
+        description: 'Preprod TUF Repo'
       tuf_root_path:
         required: false
         type: string
