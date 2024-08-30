@@ -20,11 +20,10 @@ TOOLS_BIN_DIR := $(abspath $(TOOLS_DIR)/bin)
 REKOR-CLI := $(TOOLS_BIN_DIR)/rekor-cli
 PROBER := $(TOOLS_BIN_DIR)/prober
 COSIGN := $(TOOLS_BIN_DIR)/cosign
-CRANE := $(TOOLS_BIN_DIR)/crane
 
-.PHONY: all clean rekor-cli prober cosign crane
+.PHONY: all clean rekor-cli prober cosign
 
-all: rekor-cli prober cosign crane
+all: rekor-cli prober cosign
 
 clean:
 	rm -rf hack/toolz/bin
@@ -48,7 +47,3 @@ cosign: $(COSIGN)
 $(COSIGN): $(TOOLS_DIR)/go.mod
 	cd $(TOOLS_DIR); go build -trimpath -tags=toolz -o $(COSIGN) github.com/sigstore/cosign/v2/cmd/cosign
 
-crane: $(CRANE)
-
-$(CRANE): $(TOOLS_DIR)/go.mod
-	cd $(TOOLS_DIR); go build -trimpath -tags=toolz -o $(CRANE) github.com/google/go-containerregistry/cmd/crane
