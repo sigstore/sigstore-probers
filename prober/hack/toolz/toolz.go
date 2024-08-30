@@ -20,7 +20,6 @@
 package toolz
 
 import (
-	_ "github.com/google/go-containerregistry/cmd/crane"
 	_ "github.com/sigstore/cosign/v2/cmd/cosign"
 	_ "github.com/sigstore/rekor/cmd/rekor-cli"
 	_ "github.com/sigstore/scaffolding/cmd/prober"
