@@ -50,8 +50,8 @@ github.com/rogpeppe/go-internal v1.12.0 h1:exVL4IDcn6na9z1rAb56Vxr+CgyK3nn3O+epU
 github.com/rogpeppe/go-internal v1.12.0/go.mod h1:E+RYuTGaKKdloAfM02xzb0FW3Paa99yedzYV+kq4uf4=
 github.com/secure-systems-lab/go-securesystemslib v0.8.0 h1:mr5An6X45Kb2nddcFlbmfHkLguCE9laoZCUzEEpIZXA=
 github.com/secure-systems-lab/go-securesystemslib v0.8.0/go.mod h1:UH2VZVuJfCYR8WgMlCU1uFsOUU+KeyrTWcSS73NBOzU=
-github.com/sigstore/sigstore v1.8.8 h1:B6ZQPBKK7Z7tO3bjLNnlCMG+H66tO4E/+qAphX8T/hg=
-github.com/sigstore/sigstore v1.8.8/go.mod h1:GW0GgJSCTBJY3fUOuGDHeFWcD++c4G8Y9K015pwcpDI=
+github.com/sigstore/sigstore v1.8.9 h1:NiUZIVWywgYuVTxXmRoTT4O4QAGiTEKup4N1wdxFadk=
+github.com/sigstore/sigstore v1.8.9/go.mod h1:d9ZAbNDs8JJfxJrYmulaTazU3Pwr8uLL9+mii4BNR3w=
 github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399 h1:e/5i7d4oYZ+C1wj2THlRK+oAhjeS/TRQwMfkIuet3w0=

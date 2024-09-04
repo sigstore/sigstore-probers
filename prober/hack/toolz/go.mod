@@ -208,7 +208,7 @@ require (
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
 	github.com/sigstore/fulcio v1.6.3 // indirect
 	github.com/sigstore/protobuf-specs v0.3.2 // indirect
-	github.com/sigstore/sigstore v1.8.8 // indirect
+	github.com/sigstore/sigstore v1.8.9 // indirect
 	github.com/sigstore/sigstore-go v0.6.1-0.20240821212051-2198ac32dd94 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/aws v1.8.8 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.8.8 // indirect
