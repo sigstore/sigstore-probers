@@ -17,6 +17,11 @@ on:
         type: string
         default: 'https://fulcio.sigstore.dev'
         description: 'Fulcio URL'
+      fulcio_grpc_url:
+        required: false
+        type: string
+        default: 'grpc://fulcio.sigstore.dev'
+        description: 'Fulcio GRPC URL'
       oidc_url:
         required: false
         type: string
@@ -95,7 +100,7 @@ jobs:
           max_attempts: 3
           retry_wait_seconds: 60
           retry_on: error
-          command: prober --one-time --rekor-url ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }}
+          command: prober --one-time --rekor-url ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --fulcio-grpc-url ${{ inputs.fulcio_grpc_url }}
 
       - name: Set messages
         id: msg
