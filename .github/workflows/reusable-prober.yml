@@ -20,7 +20,7 @@ on:
       fulcio_grpc_url:
         required: false
         type: string
-        default: 'grpc://fulcio.sigstore.dev'
+        default: 'fulcio.sigstore.dev'
         description: 'Fulcio GRPC URL'
       oidc_url:
         required: false
