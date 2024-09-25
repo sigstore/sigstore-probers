@@ -1,6 +1,6 @@
 module github.com/sigstore/sigstore-probers/prober/ctlog
 
-go 1.22.5
+go 1.23.1
 
 require (
 	github.com/google/certificate-transparency-go v1.2.1

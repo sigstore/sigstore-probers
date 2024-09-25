@@ -1,6 +1,6 @@
 module github.com/sigstore/sigstore-probers/pager-duty
 
-go 1.22.5
+go 1.23.1
 
 require (
 	github.com/PagerDuty/go-pagerduty v1.8.0

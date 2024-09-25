@@ -1,6 +1,7 @@
 module github.com/sigstore/sigstore-probers/prober/hack/toolz
 
-go 1.22.6
+go 1.23.1
+
 require (
 	github.com/sigstore/cosign/v2 v2.4.0
 	github.com/sigstore/rekor v1.3.6
