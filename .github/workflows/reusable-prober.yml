@@ -67,7 +67,7 @@ jobs:
     outputs:
       sigstore_probe: ${{ steps.msg.outputs.sigstore_probe }}
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
       - name: Set up Go
         id: setup-go
         uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v3.3.0
@@ -117,7 +117,7 @@ jobs:
       root_state: ${{ steps.msg.outputs.root_state }}
       dedup_key: ${{ steps.msg.outputs.dedup_key }}
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
 
       - name: Set initial root.json
         run: cp "${{ inputs.tuf_root_path }}" ./root.json
@@ -171,7 +171,7 @@ jobs:
       rekor_fulcio_e2e: ${{ steps.msg.outputs.rekor_fulcio_e2e }}
       skip_pagerduty: ${{ steps.set-skip-pagerduty.outputs.skip_pagerduty }}
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
 
       # This server is often down, resulting in a lot of flaky probers
       # If the server is down, and this step fails, we don't alert PagerDuty
