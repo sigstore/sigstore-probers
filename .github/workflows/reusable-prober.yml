@@ -294,7 +294,6 @@ jobs:
             echo "Fetching loginfo from ${{ inputs.rekor_url }} failed, exiting..."; exit 1;
           }
 
-          # get shard information from Rekor
           # shard_sizes[0] is the size of the active shard, shard_sizes [1...n] are the sizes of the inactive shards
           mapfile -t SHARD_SIZES < <(echo ${response} | jq '.. | objects | .treeSize')
 
