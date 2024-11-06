@@ -285,6 +285,48 @@ jobs:
           cosign attest --predicate ./prober/attestation.json --type slsaprovenance --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }} ${IMAGE}
           cosign verify-attestation --rekor-url  ${{ inputs.rekor_url }} --type=slsaprovenance ${IMAGE} --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity-regexp="$IDENTITY_REGEX"
 
+      - name: Read entries from all Rekor shards
+        run: |
+          set -e
+
+          # get shard information from Rekor
+          response=$(curl -fs ${{ inputs.rekor_url }}/api/v1/log) || {
+            echo "Fetching loginfo from ${{ inputs.rekor_url }} failed, exiting..."; exit 1;
+          }
+
+          # shard_sizes[0] is the size of the active shard, shard_sizes [1...n] are the sizes of the inactive shards
+          mapfile -t SHARD_SIZES < <(echo ${response} | jq '.. | objects | .treeSize')
+
+          result=()
+          offset=0
+          # Check if there are any inactive shards returned (len >= 2)
+          if (( ${#SHARD_SIZES[@]} >= 2 )); then
+            for (( i = 1; i < ${#SHARD_SIZES[@]}; i++ )); do
+              lower_bound=${offset}
+              upper_bound=$((SHARD_SIZES[i]-1))
+              random_number=$(( (RANDOM % (upper_bound - lower_bound + 1)) + lower_bound ))
+              result+=($random_number)
+              offset=$((upper_bound+offset+1))
+            done
+          fi
+
+          # now handle the active shard
+          if (( ${SHARD_SIZES[0]} > 0 )); then
+            lower_bound=${offset}
+            upper_bound=$((SHARD_SIZES[0]-1))
+            random_number=$(( (RANDOM % (upper_bound - lower_bound + 1)) + lower_bound ))
+            result+=($random_number)
+          fi
+
+          for index in "${result[@]}"; do
+            echo -n "Fetching index $index from ${{ inputs.rekor_url }} ... "
+            entry=$(curl -fs ${{ inputs.rekor_url }}/api/v1/log/entries?logIndex=$index) || {
+              echo "failed!"; exit 1;
+            }
+            echo
+            echo $entry | jq .
+          done
+
       - name: Set messages
         id: msg
         if: success() || failure()
