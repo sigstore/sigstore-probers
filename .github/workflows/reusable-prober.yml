@@ -213,12 +213,11 @@ jobs:
       # Setup the registry on port 1338
       - uses: chainguard-dev/actions/setup-registry@main
 
-      # uses container already cached on runner image to avoid rate limits and network flakes
-      # this assumes that an alpine image is cached, and doesn't care which tag it uses - this
-      # hopefully prevents us from having a page to update a tag ref
+      # this pulls a container from GHCR to avoid docker.io rate limiting and minimize network flake risk
       - name: Build and copy a container image
         run: |
-          docker tag $(docker images --format "{{.Repository}}:{{.Tag}}" -f "reference=alpine*" | head -1) ${IMAGE}
+          docker pull ghcr.io/linuxcontainers/alpine
+          docker tag ghcr.io/linuxcontainers/alpine ${IMAGE}
           docker push ${IMAGE}
 
       # START: PREPRODUCTION VERIFICATION:
