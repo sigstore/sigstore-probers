@@ -51,7 +51,6 @@ jobs:
       - name: build local probers
         if: steps.changes.outputs.tools == 'true'
         run: |
-          go build ./prober/rate-limiting.go
           go build ./prober/ctlog/ctlog-sth.go
 
       - name: build pager-duty
