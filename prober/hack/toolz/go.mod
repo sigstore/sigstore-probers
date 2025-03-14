@@ -1,7 +1,8 @@
 module github.com/sigstore/sigstore-probers/prober/hack/toolz
 
-go 1.23.2
-toolchain go1.23.7
+go 1.23.4
+
+toolchain go1.24.1
 
 require (
 	github.com/sigstore/cosign/v2 v2.4.3
