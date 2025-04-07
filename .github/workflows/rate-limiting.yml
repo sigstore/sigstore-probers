@@ -47,7 +47,7 @@ jobs:
         id: tsa_staging
         continue-on-error: true
         run: |
-          echo "fulcio_staging=success" >> $GITHUB_OUTPUT
+          echo "tsa_staging=success" >> $GITHUB_OUTPUT
           rate-limiting --url https://timestamp.sigstage.dev/api/v1/timestamp/certchain || echo "tsa_staging=failed" >> $GITHUB_OUTPUT
       - name: Rate Limit Rekor Prod
         id: rekor_prod
