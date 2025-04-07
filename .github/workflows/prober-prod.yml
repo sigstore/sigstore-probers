@@ -22,4 +22,5 @@ jobs:
     secrets:
       PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
     with:
+      tsa_url: ""
       triggerPagerDutyTest: ${{ github.event.inputs.triggerPagerDutyTest }}
