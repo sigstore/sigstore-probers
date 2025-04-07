@@ -22,5 +22,5 @@ jobs:
     secrets:
       PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
     with:
-      tsa_url: ""
+      tsa_url: "https://timestamp.sigstage.dev"
       triggerPagerDutyTest: ${{ github.event.inputs.triggerPagerDutyTest }}
