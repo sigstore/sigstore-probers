@@ -84,7 +84,7 @@ jobs:
           max_attempts: 3
           retry_wait_seconds: 60
           retry_on: error
-          command: prober --one-time --rekor-url ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --fulcio-grpc-url ${{ inputs.fulcio_grpc_url }}
+          command: prober --one-time --rekor-url ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --fulcio-grpc-url ${{ inputs.fulcio_grpc_url }} --tsa-url https://timestamp.sigstage.dev
 
       - name: Set messages
         id: msg
@@ -177,7 +177,9 @@ jobs:
           docker pull ghcr.io/sigstore/sigstore-probers:latest
           # the last argument in the next command is not used, it is required because the container doesn't have a default command
           docker create --name binaries ghcr.io/sigstore/sigstore-probers /usr/local/bin/crane
-          docker cp binaries:/usr/local/bin/* /usr/local/bin/
+          docker cp binaries:/usr/local/bin/rekor-cli /usr/local/bin/
+          docker cp binaries:/usr/local/bin/cosign /usr/local/bin/
+          docker cp binaries:/usr/local/bin/crane /usr/local/bin/
 
       # Setup the registry on port 1338
       - uses: chainguard-dev/actions/setup-registry@main
