@@ -60,15 +60,16 @@ on:
         default: 'sigstore/sigstore-probers'
         description: 'GitHub repo to file alert issues under'
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
 
   sigstore-probe:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
 
     outputs:
       sigstore_probe: ${{ steps.msg.outputs.sigstore_probe }}
@@ -103,6 +104,9 @@ jobs:
   root-probe:
     timeout-minutes: 10
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     outputs:
       root_state: ${{ steps.msg.outputs.root_state }}
       dedup_key: ${{ steps.msg.outputs.dedup_key }}
