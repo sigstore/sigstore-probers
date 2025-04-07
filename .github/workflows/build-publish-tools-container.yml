@@ -27,7 +27,7 @@ env:
 permissions: {}
 
 jobs:
-  verify-build-tools:
+  build-tools-container:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
