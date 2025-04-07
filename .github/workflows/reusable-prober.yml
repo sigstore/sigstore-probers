@@ -22,6 +22,11 @@ on:
         type: string
         default: 'fulcio.sigstore.dev'
         description: 'Fulcio GRPC URL'
+      tsa_url:
+        required: false
+        type: string
+        default: 'https://timestamp.sigstore.dev'
+        description: 'Timestamp URL'
       oidc_url:
         required: false
         type: string
@@ -84,7 +89,7 @@ jobs:
           max_attempts: 3
           retry_wait_seconds: 60
           retry_on: error
-          command: prober --one-time --rekor-url ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --fulcio-grpc-url ${{ inputs.fulcio_grpc_url }} --tsa-url https://timestamp.sigstage.dev
+          command: prober --one-time --rekor-url ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --fulcio-grpc-url ${{ inputs.fulcio_grpc_url }} ${{ inputs.tsa_url != '' && format('--tsa-url {0}',inputs.tsa_url) || '' }}
 
       - name: Set messages
         id: msg
@@ -177,12 +182,12 @@ jobs:
           docker pull ghcr.io/sigstore/sigstore-probers:latest
           # the last argument in the next command is not used, it is required because the container doesn't have a default command
           docker create --name binaries ghcr.io/sigstore/sigstore-probers /usr/local/bin/crane
-          docker cp binaries:/usr/local/bin/rekor-cli /usr/local/bin/
           docker cp binaries:/usr/local/bin/cosign /usr/local/bin/
           docker cp binaries:/usr/local/bin/crane /usr/local/bin/
 
       # Setup the registry on port 1338
-      - uses: chainguard-dev/actions/setup-registry@main
+      - run: |
+          PORT=1338 crane registry serve &
 
       # this pulls a container from GHCR to avoid docker.io rate limiting and minimize network flake risk
       - name: Build and copy a container image
