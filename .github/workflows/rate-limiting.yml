@@ -19,7 +19,7 @@ jobs:
     outputs:
       rekor_staging: ${{ steps.rekor_staging.outputs.rekor_staging }}
       fulcio_staging: ${{ steps.fulcio_staging.outputs.fulcio_staging }}
-      tsa_staging: ${{ steps.fulcio_staging.outputs.tsa_staging }}
+      tsa_staging: ${{ steps.tsa_staging.outputs.tsa_staging }}
       rekor_prod: ${{ steps.rekor_prod.outputs.rekor_prod }}
       fulcio_prod: ${{ steps.fulcio_prod.outputs.fulcio_prod }}
       summary: ${{ steps.msg.outputs.summary}}
