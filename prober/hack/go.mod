@@ -205,7 +205,7 @@ require (
 	github.com/sigstore/protobuf-specs v0.4.0 // indirect
 	github.com/sigstore/rekor v1.3.9 // indirect
 	github.com/sigstore/scaffolding v0.7.22 // indirect
-	github.com/sigstore/sigstore v1.9.0 // indirect
+	github.com/sigstore/sigstore v1.9.1 // indirect
 	github.com/sigstore/sigstore-go v0.7.0 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/aws v1.8.15 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.8.15 // indirect
