@@ -26,7 +26,7 @@ import (
 
 // TestMissingPagerDutyIntegrationKey tests whether we fail correctly
 func TestMissingPagerDutyIntegrationKey(t *testing.T) {
-	os.Unsetenv("PAGERDUTY_INTEGRATION_KEY")
+	_ = os.Unsetenv("PAGERDUTY_INTEGRATION_KEY")
 	if err := execute(); err == nil {
 		t.Error("expected error when no integration key is provided")
 	} else {
@@ -38,7 +38,7 @@ func TestMissingPagerDutyIntegrationKey(t *testing.T) {
 
 func TestInputValidation(t *testing.T) {
 	// set this to something so we don't trigger that test
-	os.Setenv("PAGERDUTY_INTEGRATION_KEY", "TEST_KEY")
+	_ = os.Setenv("PAGERDUTY_INTEGRATION_KEY", "TEST_KEY")
 
 	// set up fake endpoint
 	server := httptest.NewServer(http.HandlerFunc(
@@ -391,7 +391,7 @@ func TestInputValidation(t *testing.T) {
 
 func TestRetryLogic(t *testing.T) {
 	// set this to something so we don't trigger that test
-	os.Setenv("PAGERDUTY_INTEGRATION_KEY", "TEST_KEY")
+	_ = os.Setenv("PAGERDUTY_INTEGRATION_KEY", "TEST_KEY")
 
 	input := `{
 		"summary": "test",

@@ -31,12 +31,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: changes
         with:
           filters: |
             tools:
+              - 'Dockerfile'
               - 'prober/**'
               - 'pager-duty/**'
               - .github/workflows/build-tools-ci.yml
@@ -45,7 +48,7 @@ jobs:
         if: steps.changes.outputs.tools == 'true'
         uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5.4.0
         with:
-          go-version-file: 'prober/hack/toolz/go.mod'
+          go-version-file: 'go.work'
           check-latest: true
 
       - name: build local probers
@@ -54,26 +57,25 @@ jobs:
           go build ./prober/rate-limiting.go
           go build ./prober/ctlog/ctlog-sth.go
 
-      - name: build pager-duty
+      - name: build & test pager-duty
         if: steps.changes.outputs.tools == 'true'
         working-directory: pager-duty
         run: |
-          make
-
-      - name: test pager-duty
-        if: steps.changes.outputs.tools == 'true'
-        working-directory: pager-duty
-        run: |
-          make test
+          make all test
 
       - name: lint pager-duty
         if: steps.changes.outputs.tools == 'true'
-        uses: golangci/golangci-lint-action@55c2c1448f86e01eaae002a5a3a9624417608d84 # v6.5.2
+        uses: golangci/golangci-lint-action@1481404843c368bc19ca9406f87d6e0fc97bdcfd # v7.0.0
         with:
           working-directory: pager-duty
 
+      - name: install docker
+        if: steps.changes.outputs.tools == 'true'
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+
       - name: build probers
         if: steps.changes.outputs.tools == 'true'
-        run: |
-          make -C prober/ prober
-          make -C prober/ rekor-cli cosign
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        with:
+          context: .
+          push: false
