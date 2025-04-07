@@ -20,7 +20,7 @@ updates:
     directories:
       - "./pager-duty"
       - "./prober/ctlog"
-      - "./prober/hack/toolz"
+      - "./prober/hack"
     schedule:
       interval: "daily"
     groups:
@@ -29,6 +29,16 @@ updates:
           - "patch"
 
   - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    groups:
+      actions:
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "daily"
