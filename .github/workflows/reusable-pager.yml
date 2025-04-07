@@ -55,6 +55,7 @@ jobs:
       - name: Extract relevant binaries
         run: |
           docker pull ghcr.io/sigstore/sigstore-probers:latest
+          # the last argument in the next command is not used, it is required because the container doesn't have a default command
           docker create --name binaries ghcr.io/sigstore/sigstore-probers /usr/local/bin/pager
           docker cp binaries:/usr/local/bin/pager /usr/local/bin/
 

@@ -70,7 +70,8 @@ jobs:
       - name: Extract prober binary
         run: |
           docker pull ghcr.io/sigstore/sigstore-probers:latest
-          docker create --name binaries ghcr.io/sigstore/sigstore-probers /usr/local/bin/crane
+          # the last argument in the next command is not used, it is required because the container doesn't have a default command
+          docker create --name binaries ghcr.io/sigstore/sigstore-probers /usr/local/bin/prober
           docker cp binaries:/usr/local/bin/prober /usr/local/bin/
 
       # Make sure rekor is up and we can get root info
@@ -174,6 +175,7 @@ jobs:
       - name: Extract relevant binaries
         run: |
           docker pull ghcr.io/sigstore/sigstore-probers:latest
+          # the last argument in the next command is not used, it is required because the container doesn't have a default command
           docker create --name binaries ghcr.io/sigstore/sigstore-probers /usr/local/bin/crane
           docker cp binaries:/usr/local/bin/* /usr/local/bin/
 
