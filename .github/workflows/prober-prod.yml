@@ -11,14 +11,15 @@ on:
     # run every 15 minutes, as often as Github Actions allows
     - cron:  '0/15 * * * *'
 
-permissions:
-  id-token: write
-  contents: read
-  packages: write
-  issues: write
+permissions: {}
 
 jobs:
   prober:
+    permissions:
+      id-token: write
+      contents: read
+      packages: write
+      issues: write
     uses: ./.github/workflows/reusable-prober.yml
     secrets:
       PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
