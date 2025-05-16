@@ -1,6 +1,7 @@
 module github.com/sigstore/sigstore-probers/prober/hack
 
-go 1.23.4
+go 1.23.8
+
 toolchain go1.24.2
 
 require (
