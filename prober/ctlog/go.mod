@@ -6,7 +6,7 @@ toolchain go1.24.2
 
 require (
 	github.com/google/certificate-transparency-go v1.3.2
-	github.com/hashicorp/go-retryablehttp v0.7.7
+	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/sigstore/sigstore v1.9.5
 )
 
