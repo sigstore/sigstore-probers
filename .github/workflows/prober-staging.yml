@@ -1,6 +1,7 @@
 name: Staging Sigstore Prober
 
 on:
+  pull_request:
   workflow_dispatch:
     inputs:
       triggerPagerDutyTest:
