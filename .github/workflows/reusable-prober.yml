@@ -12,6 +12,11 @@ on:
         type: string
         default: 'https://rekor.sigstore.dev'
         description: 'Rekor URL'
+      rekor_v2_url:
+        required: false
+        type: string
+        default: '' # TODO: no default while we do not yet have a production instance.
+        description: 'Rekor V2 URL'
       fulcio_url:
         required: false
         type: string
@@ -91,7 +96,7 @@ jobs:
           max_attempts: 3
           retry_wait_seconds: 60
           retry_on: error
-          command: prober --one-time --rekor-url ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --fulcio-grpc-url ${{ inputs.fulcio_grpc_url }} ${{ inputs.tsa_url != '' && format('--tsa-url {0}',inputs.tsa_url) || '' }}
+          command: prober --one-time --rekor-url ${{ inputs.rekor_url }} ${{ inputs.rekor_v2_url != '' && format('--rekor-v2-url {0}',inputs.rekor_v2_url) || '' }} --fulcio-url ${{ inputs.fulcio_url }} --fulcio-grpc-url ${{ inputs.fulcio_grpc_url }} ${{ inputs.tsa_url != '' && format('--tsa-url {0}',inputs.tsa_url) || '' }}
 
       - name: Set messages
         id: msg

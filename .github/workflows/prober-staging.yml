@@ -26,6 +26,7 @@ jobs:
     with:
       enable_staging: true
       rekor_url: "https://rekor.sigstage.dev"
+      rekor_v2_url: "https://log2025-alpha1.rekor.sigstage.dev"
       fulcio_url: "https://fulcio.sigstage.dev"
       fulcio_grpc_url: "fulcio.sigstage.dev"
       tsa_url: "https://timestamp.sigstage.dev"
