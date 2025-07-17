@@ -8,7 +8,7 @@ require (
 	github.com/PagerDuty/go-pagerduty v1.8.0
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/hashicorp/go-retryablehttp v0.7.8
-	github.com/spf13/pflag v1.0.6
+	github.com/spf13/pflag v1.0.7
 	go.uber.org/zap v1.27.0
 )
 
