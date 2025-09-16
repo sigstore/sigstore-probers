@@ -7,48 +7,25 @@ on:
         description: 'Integration key for PagerDuty'
         required: true
     inputs:
-      rekor_url:
+      rekor_v2_url:
         required: false
         type: string
-        default: 'https://rekor.sigstore.dev'
-        description: 'Rekor URL'
-      fulcio_url:
+        description: 'Rekor v2 URL'
+      rekor_v2_public_key:
         required: false
         type: string
-        default: 'https://fulcio.sigstore.dev'
-        description: 'Fulcio URL'
-      fulcio_grpc_url:
-        required: false
-        type: string
-        default: 'fulcio.sigstore.dev'
-        description: 'Fulcio GRPC URL'
-      tsa_url:
-        required: false
-        type: string
-        default: 'https://timestamp.sigstore.dev'
-        description: 'Timestamp URL'
-      oidc_url:
-        required: false
-        type: string
-        default: 'https://oauth2.sigstore.dev/auth'
-        description: 'OIDC URL'
+        description: 'Rekor v2 Public Key'
       enable_staging:
         required: false
         type: boolean
       tuf_repo:
         required: false
         type: string
-        default: 'https://tuf-repo-cdn.sigstore.dev'
         description: 'TUF Repo'
-      tuf_preprod_repo:
-        required: false
-        type: string
-        default: 'https://sigstore.github.io/root-signing'
-        description: 'Preprod TUF Repo'
       tuf_root_path:
         required: false
         type: string
-        default: ".github/assets/sigstore.root.json"
+        default: '.github/assets/sigstore.root.json'
         description: "path to the tuf root"
       triggerPagerDutyTest:
         description: 'Trigger PagerDuty test message'
@@ -91,7 +68,7 @@ jobs:
           max_attempts: 3
           retry_wait_seconds: 60
           retry_on: error
-          command: prober --one-time --rekor-url ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --fulcio-grpc-url ${{ inputs.fulcio_grpc_url }} ${{ inputs.tsa_url != '' && format('--tsa-url {0}',inputs.tsa_url) || '' }}
+          command: prober --one-time ${{ inputs.enable_staging && '--staging' || '' }}
 
       - name: Set messages
         id: msg
@@ -124,18 +101,7 @@ jobs:
           metadata_url: ${{ inputs.tuf_repo }}
           valid_days: 2
           offline_valid_days: 15
-          metadata_dir: tuf/prod/
-          compare_source: false
-
-      - name: Verify preprod TUF repository state (and the upgrade from prod)
-        if: ${{ inputs.enable_staging == false }}
-        uses: theupdateframework/tuf-on-ci/actions/test-repository@0ef66318d40656f421781f28df93de9c69ccb9ba # v0.18.0
-        with:
-          metadata_url: ${{ inputs.tuf_preprod_repo }}
-          update_base_url:  ${{ inputs.tuf_repo }}
-          valid_days: 2
-          offline_valid_days: 15
-          metadata_dir: tuf/preprod/
+          metadata_dir: tuf/
           compare_source: false
 
       - name: Set messages
@@ -149,27 +115,36 @@ jobs:
           if [ "${{ job.status }}" == 'failure' ]; then echo "root_state=failure" >> $GITHUB_OUTPUT; fi
 
   rekor-fulcio-e2e:
+    strategy:
+      matrix:
+        version: [v1, v2]
+      fail-fast: false
+    name: rekor-${{ matrix.version }}-fulcio-e2e
     timeout-minutes: 10
     permissions:
       id-token: write
       contents: read
     env:
       COSIGN_YES: "true"
-      GIT_HASH: ${{ github.sha }}
-      GIT_VERSION: unstable
-      GITHUB_RUN_ID: ${{ github.run_id }}
-      GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
-      IMAGE: localhost:1338/image:${{ github.sha }}-${{ github.run_id }}
-      REKOR_SERVER: ${{ inputs.rekor_url }}
+      IMAGE: localhost:1338/image:${{ github.sha }}-${{ github.run_id }}-${{ matrix.version }}
       IDENTITY_REGEX: ${{ github.server_url }}/${{ github.repository }}/.github/workflows/reusable-prober.yml@refs/.*
+      TIMESTAMP_VERIFY_FLAG: ${{ matrix.version == 'v2' && '--use-signed-timestamps' || '' }}
     runs-on: ubuntu-latest
     outputs:
-      rekor_fulcio_e2e: ${{ steps.msg.outputs.rekor_fulcio_e2e }}
+      result: ${{ job.status }}
       skip_pagerduty: ${{ steps.set-skip-pagerduty.outputs.skip_pagerduty }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
+
+      - name: Validate Rekor v2 inputs
+        if: matrix.version == 'v2'
+        run: |
+          if [[ ('${{ inputs.rekor_v2_url }}' && ! '${{ inputs.rekor_v2_public_key }}') || (! '${{ inputs.rekor_v2_url }}' && '${{ inputs.rekor_v2_public_key }}') ]]; then
+            echo "Error: rekor_v2_url and rekor_v2_public_key must be provided together."
+            exit 1
+          fi
 
       # This server is often down, resulting in a lot of flaky probers
       # If the server is down, and this step fails, we don't alert PagerDuty
@@ -191,8 +166,12 @@ jobs:
           docker pull ghcr.io/sigstore/sigstore-probers:latest
           # the last argument in the next command is not used, it is required because the container doesn't have a default command
           docker create --name binaries ghcr.io/sigstore/sigstore-probers /usr/local/bin/crane
-          docker cp binaries:/usr/local/bin/cosign /usr/local/bin/
           docker cp binaries:/usr/local/bin/crane /usr/local/bin/
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v4.0.0
+        with:
+          cosign-release: main
 
       # Setup the registry on port 1338
       - run: |
@@ -204,48 +183,6 @@ jobs:
           docker pull ghcr.io/linuxcontainers/alpine
           docker tag ghcr.io/linuxcontainers/alpine ${IMAGE}
           docker push ${IMAGE}
-
-      # START: PREPRODUCTION VERIFICATION:
-      #   * "Upgrade" cosign from prod to preprod TUF; sign and verify
-      #   * Do not run this test for staging TUF
-      # TODO: Create a matrix (https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs)
-      #       to reduce duplication
-
-      - name: Initialize prod TUF root
-        if: ${{ inputs.enable_staging == false }}
-        run: |
-          for i in {1..5}
-          do
-            if cosign initialize --mirror=${{ inputs.tuf_repo }} --root=${{ inputs.tuf_root_path }}; then
-              echo "Successfully initialized" && exit 0
-            else
-              echo "Failed to initialize" && sleep 10
-            fi
-          done
-
-      - name: Initialize preprod TUF root
-        if: ${{ inputs.enable_staging == false }}
-        run: |
-          for i in {1..5}
-          do
-            if cosign initialize --mirror=${{ inputs.tuf_preprod_repo }} --root=${{ inputs.tuf_root_path }}; then
-              echo "Successfully initialized" && exit 0
-            else
-              echo "Failed to initialize" && sleep 10
-            fi
-          done
-
-      # Test signing in preproduction
-      - name: Sign and verify the image with preprod TUF
-        if: ${{ inputs.enable_staging == false }}
-        run: |
-          cosign sign --yes ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }} --oidc-provider github-actions
-          cosign verify ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity-regexp="$IDENTITY_REGEX"
-
-      - name: Remove preprod TUF
-        run: |
-          rm -rf ~/.sigstore
-      # END: PREPRODUCTION VERIFICATION
 
       - name: Initialize TUF root
         run: |
@@ -259,23 +196,71 @@ jobs:
           done
           exit 1
 
+      - name: List cosign TUF root contents
+        run: |
+          TUF_TARGETS_DIR=~/.sigstore/root/$(echo ${{ inputs.tuf_repo }} | sed -e 's#^https://##' -e 's#/$##')/targets
+          echo "These are the contents of the cosign TUF root: "
+          ls $TUF_TARGETS_DIR
+
+      - name: Prepare signing config and trusted root
+        run: |
+          TUF_TARGETS_DIR=~/.sigstore/root/$(echo ${{ inputs.tuf_repo }} | sed -e 's#^https://##' -e 's#/$##')/targets
+          cp ${TUF_TARGETS_DIR}/signing_config.v0.2.json ./signing_config.v0.2.json
+          cp ${TUF_TARGETS_DIR}/trusted_root.json ./trusted_root.json
+
+      - name: Configure signing config for Rekor v1
+        if: matrix.version == 'v1'
+        run: |
+          # Filter the signing config to only use Rekor v1 services.
+          jq '.rekorTlogUrls |= map(select(.majorApiVersion == 1))' signing_config.v0.2.json > signing_config.v0.2.json.tmp && mv signing_config.v0.2.json.tmp signing_config.v0.2.json
+
+      - name: Configure signing config and trusted root for Rekor v2
+        if: matrix.version == 'v2'
+        run: |
+          # If a Rekor v2 URL is provided, use it and the provided public key.
+          if [[ -n "${{ inputs.rekor_v2_url }}" ]]; then
+            jq --arg url "${{ inputs.rekor_v2_url }}" '.rekorTlogUrls = [{"url": $url, "majorApiVersion": 2}]' signing_config.v0.2.json > signing_config.v0.2.json.tmp && mv signing_config.v0.2.json.tmp signing_config.v0.2.json
+            # If a Rekor service for the URL is present in the trusted root, error out.
+            if jq -e --arg url "${{ inputs.rekor_v2_url }}" '.tlogs[] | select(.baseUrl == $url)' trusted_root.json > /dev/null; then
+              echo "Error: Rekor service URL ${{ inputs.rekor_v2_url }} already exists in the trusted root."
+              exit 1
+            else
+              # Calculate the key ID according to the C2SP spec for ED25519 signatures: https://github.com/sigstore/rekor-tiles/blob/main/CLIENTS.md#trustedroot-lookup-by-checkpoint-key-id-rather-than-log-id
+              START_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+              KEY_NAME=$(echo "${{ inputs.rekor_v2_url }}" | sed -e 's#^https://##' -e 's#/$##')
+              # tail is used here to strip the 12-byte ASN.1 header from the decoded public key
+              KEY_ID=$( (printf "%s" "$KEY_NAME"; printf "\x0a\x01"; echo -n "${{ inputs.rekor_v2_public_key }}" | base64 -d | tail -c+13) | sha256sum | head -c 64 | xxd -r -p | base64 -w0)
+              jq --arg url "${{ inputs.rekor_v2_url }}" --arg key "${{ inputs.rekor_v2_public_key }}" --arg key_id "$KEY_ID" --arg start_time "$START_TIME" '.tlogs += [{"baseUrl": $url, "hashAlgorithm": "SHA2_256", "publicKey": {"rawBytes": $key, "keyDetails": "PKIX_ED25519", "validFor": {"start": $start_time}}, "logId": {"keyId": $key_id}}]' trusted_root.json > trusted_root.json.tmp && mv trusted_root.json.tmp trusted_root.json
+            fi
+          # If no inputs are provided, use the default behavior for the environment.
+          elif [[ "${{ inputs.enable_staging }}" == "false" ]]; then
+            # Prod: hardcode the latest Rekor v2 shard URL until Rekor v2 is available in the prod signing config.
+            REKOR_V2_URL="https://log2025-1.rekor.sigstore.dev"
+            jq --arg url "$REKOR_V2_URL" '.rekorTlogUrls = [{"url": $url, "majorApiVersion": 2}]' signing_config.v0.2.json > signing_config.v0.2.json.tmp && mv signing_config.v0.2.json.tmp signing_config.v0.2.json
+          else
+            # Staging: filter the signing config to only use Rekor v2 services.
+            jq '.rekorTlogUrls |= map(select(.majorApiVersion == 2))' signing_config.v0.2.json > signing_config.v0.2.json.tmp && mv signing_config.v0.2.json.tmp signing_config.v0.2.json
+          fi
+
       - name: Sign and verify the image
         run: |
-          cosign sign --yes ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }} --oidc-provider github-actions
-          cosign verify ${IMAGE} --rekor-url  ${{ inputs.rekor_url }} --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity-regexp="$IDENTITY_REGEX"
+          cosign sign --yes ${IMAGE} --signing-config signing_config.v0.2.json --trusted-root trusted_root.json --oidc-provider github-actions --new-bundle-format
+          cosign verify ${IMAGE} --trusted-root trusted_root.json --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity-regexp="$IDENTITY_REGEX" --new-bundle-format ${{ env.TIMESTAMP_VERIFY_FLAG }}
 
       - name: Generate and upload attestation
         run: |
-          cosign attest --predicate ./prober/attestation.json --type slsaprovenance --rekor-url  ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --oidc-issuer ${{ inputs.oidc_url }} ${IMAGE}
-          cosign verify-attestation --rekor-url  ${{ inputs.rekor_url }} --type=slsaprovenance ${IMAGE} --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity-regexp="$IDENTITY_REGEX"
+          cosign attest --predicate ./prober/attestation.json --type slsaprovenance --signing-config signing_config.v0.2.json --trusted-root trusted_root.json ${IMAGE} --new-bundle-format
+          cosign verify-attestation --type=slsaprovenance ${IMAGE} --trusted-root trusted_root.json --certificate-oidc-issuer=https://token.actions.githubusercontent.com --certificate-identity-regexp="$IDENTITY_REGEX" --new-bundle-format ${{ env.TIMESTAMP_VERIFY_FLAG }}
 
-      - name: Read entries from all Rekor shards
+      - name: Read entries from all Rekor v1 shards
+        if: matrix.version == 'v1'
         run: |
+          # Assume the signing config contains a single Rekor v1 URL
           set -e
-
+          REKOR_URL=$(jq -r '.rekorTlogUrls[] | select(.majorApiVersion == 1) | .url' signing_config.v0.2.json)
           # get shard information from Rekor
-          response=$(curl -fs ${{ inputs.rekor_url }}/api/v1/log) || {
-            echo "Fetching loginfo from ${{ inputs.rekor_url }} failed, exiting..."; exit 1;
+          response=$(curl -fs $REKOR_URL/api/v1/log) || {
+            echo "Fetching loginfo from $REKOR_URL failed, exiting..."; exit 1;
           }
 
           # shard_sizes[0] is the size of the active shard, shard_sizes [1...n] are the sizes of the inactive shards
@@ -303,8 +288,8 @@ jobs:
           fi
 
           for index in "${result[@]}"; do
-            echo -n "Fetching index $index from ${{ inputs.rekor_url }} ... "
-            entry=$(curl -fs ${{ inputs.rekor_url }}/api/v1/log/entries?logIndex=$index) || {
+            echo -n "Fetching index $index from $REKOR_URL ... "
+            entry=$(curl -fs $REKOR_URL/api/v1/log/entries?logIndex=$index) || {
               echo "failed!"; exit 1;
             }
             echo
@@ -315,8 +300,23 @@ jobs:
         id: msg
         if: success() || failure()
         run: |
-          echo "rekor_fulcio_e2e=good" >> $GITHUB_OUTPUT
-          if [ "${{ job.status }}" == 'failure' ]; then echo "rekor_fulcio_e2e=failure" >> $GITHUB_OUTPUT; fi
+          echo "result=${{ job.status }}" >> $GITHUB_OUTPUT
+
+  process-e2e-results:
+    if: always()
+    runs-on: ubuntu-latest
+    needs: rekor-fulcio-e2e
+    # This job must have steps to be valid, even if it only computes outputs.
+    steps:
+      - name: Aggregate matrix results
+        run: echo "Aggregating results from the rekor-fulcio-e2e matrix."
+    outputs:
+      # Correctly check if any matrix job failed or was cancelled.
+      result: ${{ (contains(needs.rekor-fulcio-e2e.*.result, 'failure') || contains(needs.rekor-fulcio-e2e.*.result, 'cancelled')) && 'failure' || 'success' }}
+      details: ${{ toJSON(needs.rekor-fulcio-e2e) }}
+      skip_pagerduty: ${{ contains(needs.rekor-fulcio-e2e.*.outputs.skip_pagerduty, 'true') }}
+      v1_result: ${{ needs.rekor-fulcio-e2e.v1.result || 'skipped' }}
+      v2_result: ${{ needs.rekor-fulcio-e2e.v2.result || 'skipped' }}
 
   compute-summary-msg:
     runs-on: ubuntu-latest
@@ -339,8 +339,8 @@ jobs:
           fi
 
   pagerduty-notification:
-    if: github.event.inputs.triggerPagerDutyTest=='true' || (failure() && needs.rekor-fulcio-e2e.outputs.skip_pagerduty != 'true')
-    needs: [sigstore-probe, root-probe, rekor-fulcio-e2e, compute-summary-msg]
+    if: github.event.inputs.triggerPagerDutyTest=='true' || (failure() && needs.process-e2e-results.outputs.skip_pagerduty != 'true')
+    needs: [sigstore-probe, root-probe, rekor-fulcio-e2e, compute-summary-msg, process-e2e-results]
     uses: ./.github/workflows/reusable-pager.yml
     permissions:
       contents: read
@@ -350,7 +350,7 @@ jobs:
       summary: ${{ needs.compute-summary-msg.outputs.summary }}
       component: "health prober"
       group: ${{ needs.compute-summary-msg.outputs.group }}
-      dedup_key: "${{ needs.root-probe.outputs.dedup_key }}"
+      dedup_key: "${{ needs.root-probe.outputs.dedup_key }}-${{ needs.process-e2e-results.outputs.result }}"
       details: >
         {
           "Environment": "${{ needs.compute-summary-msg.outputs.group }}",
@@ -358,7 +358,8 @@ jobs:
           "Commit": "${{ github.sha }}",
           "Prober": "${{ needs.sigstore-probe.outputs.sigstore_probe }}",
           "GCS Root": "${{ needs.root-probe.outputs.root_state }}",
-          "Rekor Fulcio E2E Test": "${{ needs.rekor-fulcio-e2e.outputs.rekor_fulcio_e2e }}"
+          "Rekor/Fulcio E2E (v1)": "${{ needs.process-e2e-results.outputs.v1_result }}",
+          "Rekor/Fulcio E2E (v2)": "${{ needs.process-e2e-results.outputs.v2_result }}"
         }
       links: >
         [
@@ -373,9 +374,9 @@ jobs:
         ]
 
   github-issue:
-    if: always() && (needs.sigstore-probe.result == 'failure' || needs.root-probe.result == 'failure' || needs.rekor-fulcio-e2e.result == 'failure')
+    if: always() && (needs.sigstore-probe.result == 'failure' || needs.root-probe.result == 'failure' || needs.process-e2e-results.result == 'failure')
     runs-on: ubuntu-latest
-    needs: [sigstore-probe, root-probe, rekor-fulcio-e2e, compute-summary-msg]
+    needs: [sigstore-probe, root-probe, rekor-fulcio-e2e, compute-summary-msg, process-e2e-results]
     permissions:
       issues: write
     steps:
@@ -388,5 +389,6 @@ jobs:
           Commit: ${{ github.sha }}
           Prober: ${{ needs.sigstore-probe.outputs.sigstore_probe }}
           GCS Root: ${{ needs.root-probe.outputs.root_state }}
-          Rekor Fulcio E2E Test: ${{ needs.rekor-fulcio-e2e.outputs.rekor_fulcio_e2e }}
+          Rekor/Fulcio E2E (v1): ${{ needs.process-e2e-results.outputs.v1_result }}
+          Rekor/Fulcio E2E (v2): ${{ needs.process-e2e-results.outputs.v2_result }}
           EOF
