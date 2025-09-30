@@ -27,8 +27,6 @@ jobs:
       enable_staging: true
       rekor_url: "https://rekor.sigstage.dev"
       fulcio_url: "https://fulcio.sigstage.dev"
-      fulcio_grpc_url: "fulcio.sigstage.dev"
-      tsa_url: "https://timestamp.sigstage.dev"
       oidc_url: "https://oauth2.sigstage.dev/auth"
       tuf_repo: "https://tuf-repo-cdn.sigstage.dev"
       tuf_preprod_repo: "https://sigstore.github.io/root-signing-staging"

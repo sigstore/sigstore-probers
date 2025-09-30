@@ -17,16 +17,6 @@ on:
         type: string
         default: 'https://fulcio.sigstore.dev'
         description: 'Fulcio URL'
-      fulcio_grpc_url:
-        required: false
-        type: string
-        default: 'fulcio.sigstore.dev'
-        description: 'Fulcio GRPC URL'
-      tsa_url:
-        required: false
-        type: string
-        default: 'https://timestamp.sigstore.dev'
-        description: 'Timestamp URL'
       oidc_url:
         required: false
         type: string
@@ -91,7 +81,7 @@ jobs:
           max_attempts: 3
           retry_wait_seconds: 60
           retry_on: error
-          command: prober --one-time --rekor-url ${{ inputs.rekor_url }} --fulcio-url ${{ inputs.fulcio_url }} --fulcio-grpc-url ${{ inputs.fulcio_grpc_url }} ${{ inputs.tsa_url != '' && format('--tsa-url {0}',inputs.tsa_url) || '' }}
+          command: prober --one-time ${{ inputs.enable_staging && '--staging' || '' }}
 
       - name: Set messages
         id: msg
