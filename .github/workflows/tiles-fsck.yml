@@ -1,0 +1,99 @@
+#
+# Copyright 2025 The Sigstore Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Tiles-backed Merkle Tree Consistency Check
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 0 * * 1 # weekly at midnight UTC on Monday
+
+jobs:
+  tiles-fsck:
+    name: Merkle Tree Consistency Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      summary: ${{ steps.tiles_fsck.outputs.summary }}
+      env: ${{ steps.tiles_fsck.outputs.env }}
+      probe_status: ${{ steps.tiles_fsck.outputs.probe_status }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+          - staging
+          # - production TODO: uncomment when key is published in root-signing
+    steps:
+      # TODO: uncomment when image containing new tiles-fsck binary is published
+      #- name: Extract relevant binaries
+      #  run: |
+      #    docker pull ghcr.io/sigstore/sigstore-probers:latest
+      #    # the last argument in the next command is not used, it is required because the container doesn't have a default command
+      #    docker create --name binaries ghcr.io/sigstore/sigstore-probers /usr/local/bin/tiles-fsck
+      #    docker cp binaries:/usr/local/bin/tiles-fsck /usr/local/bin/
+
+      # TODO: remove build steps when new image is published
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Set up Go
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        with:
+          go-version-file: 'go.work'
+          check-latest: true
+      - name: Build prober
+        run: |
+          go build ./prober/tiles-fsck/
+          mv tiles-fsck /usr/local/bin/
+
+      - name: Run Merkle Tree Consistency Check - ${{ matrix.url }}
+        id: tiles_fsck
+        run: |
+          echo "env=${{ matrix.env }}" >> $GITHUB_OUTPUT
+          if [ "${{ inputs.triggerPagerDutyTest }}" == "true" ]; then
+            echo "summary=Test Notification" >> $GITHUB_OUTPUT;
+          else
+            echo "summary=Tiles Consistency Check Failed" >> $GITHUB_OUTPUT;
+          fi
+          if ! tiles-fsck ${{ matrix.env == 'staging' && '--staging' }} ; then
+            echo "probe_status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+  pager:
+    if: github.event.inputs.triggerPagerDutyTest=='true' || (failure() && needs.tiles-fsck.outputs.probe_status == 'failed')
+    needs: [tiles-fsck]
+    uses: ./.github/workflows/reusable-pager.yml
+    secrets:
+      PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
+    with:
+      summary: ${{ needs.tiles-fsck.outputs.summary }}
+      component: "rekor v2"
+      group: ${{ needs.tiles-fsck.outputs.env }}
+      details: >
+        {
+          "Environment": "${{ needs.tiles-fsck.outputs.env }}",
+          "Failure URL": "https://github.com/sigstore/sigstore-probers/actions/runs/${{ github.run_id }}",
+          "Commit": "${{ github.sha }}",
+          "Tiles transparency log ${{ needs.tiles-fsck.outputs.env }}": "${{ needs.tiles-fsck.outputs.probe_status }}"
+        }
+      links: >
+        [
+          {
+            "href": "https://github.com/sigstore/public-good-instance/blob/main/playbooks/tiles-tlog.md",
+            "text": "Tiles-based Transparency Log Playbook"
+          }
+        ]
