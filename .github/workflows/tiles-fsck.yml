@@ -37,27 +37,12 @@ jobs:
           - staging
           # - production TODO: uncomment when key is published in root-signing
     steps:
-      # TODO: uncomment when image containing new tiles-fsck binary is published
-      #- name: Extract relevant binaries
-      #  run: |
-      #    docker pull ghcr.io/sigstore/sigstore-probers:latest
-      #    # the last argument in the next command is not used, it is required because the container doesn't have a default command
-      #    docker create --name binaries ghcr.io/sigstore/sigstore-probers /usr/local/bin/tiles-fsck
-      #    docker cp binaries:/usr/local/bin/tiles-fsck /usr/local/bin/
-
-      # TODO: remove build steps when new image is published
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          persist-credentials: false
-      - name: Set up Go
-        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
-        with:
-          go-version-file: 'go.work'
-          check-latest: true
-      - name: Build prober
+      - name: Extract relevant binaries
         run: |
-          go build ./prober/tiles-fsck/
-          mv tiles-fsck /usr/local/bin/
+          docker pull ghcr.io/sigstore/sigstore-probers:latest
+          # the last argument in the next command is not used, it is required because the container doesn't have a default command
+          docker create --name binaries ghcr.io/sigstore/sigstore-probers /usr/local/bin/tiles-fsck
+          docker cp binaries:/usr/local/bin/tiles-fsck /usr/local/bin/
 
       - name: Run Merkle Tree Consistency Check - ${{ matrix.url }}
         id: tiles_fsck
