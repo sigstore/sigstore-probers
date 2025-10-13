@@ -112,6 +112,8 @@ jobs:
       dedup_key: ${{ steps.msg.outputs.dedup_key }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
 
       - name: Set initial root.json
         run: cp "${{ inputs.tuf_root_path }}" ./root.json
@@ -166,6 +168,8 @@ jobs:
       skip_pagerduty: ${{ steps.set-skip-pagerduty.outputs.skip_pagerduty }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
 
       # This server is often down, resulting in a lot of flaky probers
       # If the server is down, and this step fails, we don't alert PagerDuty

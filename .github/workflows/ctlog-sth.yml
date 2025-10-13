@@ -11,6 +11,8 @@ on:
     # run every 15 minutes, as often as Github Actions allows
     - cron: '*/15 * * * *'
 
+permissions: {}
+
 jobs:
   ctlog-sth:
     name: CTLog STH probe
