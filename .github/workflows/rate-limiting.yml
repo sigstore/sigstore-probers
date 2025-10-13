@@ -11,6 +11,8 @@ on:
     # run once a day
     - cron: '0 0 * * *'
 
+permissions: {}
+
 jobs:
   rate-limiting:
     timeout-minutes: 10
