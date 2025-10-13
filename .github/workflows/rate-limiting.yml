@@ -11,7 +11,8 @@ on:
     # run once a day
     - cron: '0 0 * * *'
 
-permissions: {}
+permissions:
+  contents: read
 
 jobs:
   rate-limiting:
