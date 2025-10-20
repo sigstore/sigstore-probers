@@ -7,6 +7,14 @@ on:
         description: 'Trigger PagerDuty test message'
         required: false
         type: boolean
+      rekor_v2_url:
+        description: '(Optional) Rekor v2 URL'
+        required: false
+        type: string
+      rekor_v2_public_key:
+        description: '(Optional) Rekor v2 Public Key'
+        required: false
+        type: string
   schedule:
     # run every 15 minutes, as often as Github Actions allows
     - cron:  '0/15 * * * *'
@@ -25,3 +33,6 @@ jobs:
       PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
     with:
       triggerPagerDutyTest: ${{ github.event.inputs.triggerPagerDutyTest }}
+      tuf_repo: "https://tuf-repo-cdn.sigstore.dev"
+      rekor_v2_url: ${{ github.event.inputs.rekor_v2_url }}
+      rekor_v2_public_key: ${{ github.event.inputs.rekor_v2_public_key }}

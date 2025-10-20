@@ -7,6 +7,14 @@ on:
         description: 'Trigger PagerDuty test message'
         required: false
         type: boolean
+      rekor_v2_url:
+        description: '(Optional) Rekor v2 URL'
+        required: false
+        type: string
+      rekor_v2_public_key:
+        description: '(Optional) Rekor v2 Public Key'
+        required: false
+        type: string
   schedule:
     # run every 15 minutes, as often as Github Actions allows
     - cron:  '0/15 * * * *'
@@ -25,12 +33,8 @@ jobs:
       issues: write
     with:
       enable_staging: true
-      rekor_url: "https://rekor.sigstage.dev"
-      fulcio_url: "https://fulcio.sigstage.dev"
-      fulcio_grpc_url: "fulcio.sigstage.dev"
-      tsa_url: "https://timestamp.sigstage.dev"
-      oidc_url: "https://oauth2.sigstage.dev/auth"
       tuf_repo: "https://tuf-repo-cdn.sigstage.dev"
-      tuf_preprod_repo: "https://sigstore.github.io/root-signing-staging"
       tuf_root_path: ".github/assets/sigstage.root.json"
       triggerPagerDutyTest: ${{ github.event.inputs.triggerPagerDutyTest }}
+      rekor_v2_url: ${{ github.event.inputs.rekor_v2_url }}
+      rekor_v2_public_key: ${{ github.event.inputs.rekor_v2_public_key }}

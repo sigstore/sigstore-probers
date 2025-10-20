@@ -20,10 +20,12 @@ jobs:
     name: Nginx Rate Limiting Test
     runs-on: ubuntu-latest
     outputs:
-      rekor_staging: ${{ steps.rekor_staging.outputs.rekor_staging }}
+      rekor_v1_staging: ${{ steps.rekor_v1_staging.outputs.rekor_v1_staging }}
+      rekor_v2_staging: ${{ steps.rekor_v2_staging.outputs.rekor_v2_staging }}
       fulcio_staging: ${{ steps.fulcio_staging.outputs.fulcio_staging }}
       tsa_staging: ${{ steps.tsa_staging.outputs.tsa_staging }}
-      rekor_prod: ${{ steps.rekor_prod.outputs.rekor_prod }}
+      rekor_v1_prod: ${{ steps.rekor_v1_prod.outputs.rekor_v1_prod }}
+      rekor_v2_prod: ${{ steps.rekor_v2_prod.outputs.rekor_v2_prod }}
       fulcio_prod: ${{ steps.fulcio_prod.outputs.fulcio_prod }}
       summary: ${{ steps.msg.outputs.summary}}
     steps:
@@ -34,12 +36,18 @@ jobs:
           docker create --name binaries ghcr.io/sigstore/sigstore-probers /usr/local/bin/rate-limiting
           docker cp binaries:/usr/local/bin/rate-limiting /usr/local/bin/
 
-      - name: Rate Limit Rekor Staging
-        id: rekor_staging
+      - name: Rate Limit Rekor v1 Staging
+        id: rekor_v1_staging
         continue-on-error: true
         run: |
-          echo "rekor_staging=success" >> $GITHUB_OUTPUT
-          rate-limiting --url https://rekor.sigstage.dev/api/v1/log || echo "rekor_staging=failed" >> $GITHUB_OUTPUT
+          echo "rekor_v1_staging=success" >> $GITHUB_OUTPUT
+          rate-limiting --url https://rekor.sigstage.dev/api/v1/log || echo "rekor_v1_staging=failed" >> $GITHUB_OUTPUT
+      - name: Rate Limit Rekor v2 Staging
+        id: rekor_v2_staging
+        continue-on-error: true
+        run: |
+          echo "rekor_v2_staging=success" >> $GITHUB_OUTPUT
+          rate-limiting --url https://log2025-alpha3.rekor.sigstage.dev/healthz || echo "rekor_v2_staging=failed" >> $GITHUB_OUTPUT
       - name: Rate Limit Fulcio Staging
         id: fulcio_staging
         continue-on-error: true
@@ -52,12 +60,18 @@ jobs:
         run: |
           echo "tsa_staging=success" >> $GITHUB_OUTPUT
           rate-limiting --url https://timestamp.sigstage.dev/api/v1/timestamp/certchain || echo "tsa_staging=failed" >> $GITHUB_OUTPUT
-      - name: Rate Limit Rekor Prod
-        id: rekor_prod
+      - name: Rate Limit Rekor v1 Prod
+        id: rekor_v1_prod
         continue-on-error: true
         run: |
-          echo "rekor_prod=success" >> $GITHUB_OUTPUT
-          rate-limiting --url https://rekor.sigstore.dev/api/v1/log || echo "rekor_prod=failed" >> $GITHUB_OUTPUT
+          echo "rekor_v1_prod=success" >> $GITHUB_OUTPUT
+          rate-limiting --url https://rekor.sigstore.dev/api/v1/log || echo "rekor_v1_prod=failed" >> $GITHUB_OUTPUT
+      - name: Rate Limit Rekor v2 Prod
+        id: rekor_v2_prod
+        continue-on-error: true
+        run: |
+          echo "rekor_v2_prod=success" >> $GITHUB_OUTPUT
+          rate-limiting --url https://log2025-1.rekor.sigstore.dev/healthz || echo "rekor_v2_prod=failed" >> $GITHUB_OUTPUT
       - name: Rate Limit Fulcio Prod
         id: fulcio_prod
         continue-on-error: true
@@ -87,8 +101,10 @@ jobs:
         {
           "Failure URL": "https://github.com/sigstore/public-good-instance/actions/runs/${{ github.run_id }}",
           "Commit": "${{ github.sha }}",
-          "Rekor Staging": "${{ needs.rate-limiting.outputs.rekor_staging }}",
-          "Rekor Prod": "${{ needs.rate-limiting.outputs.rekor_prod }}",
+          "Rekor v1 Staging": "${{ needs.rate-limiting.outputs.rekor_v1_staging }}",
+          "Rekor v1 Prod": "${{ needs.rate-limiting.outputs.rekor_v1_prod }}",
+          "Rekor v2 Prod": "${{ needs.rate-limiting.outputs.rekor_v2_prod }}",
+          "Rekor v2 Staging": "${{ needs.rate-limiting.outputs.rekor_v2_staging }}",
           "Fulcio Staging": "${{ needs.rate-limiting.outputs.fulcio_staging }}",
           "Fulcio Prod": "${{ needs.rate-limiting.outputs.fulcio_prod }}",
           "Timestamp Staging": "${{ needs.rate-limiting.outputs.tsa_staging }}"
