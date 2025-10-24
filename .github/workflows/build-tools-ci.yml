@@ -50,6 +50,7 @@ jobs:
         with:
           go-version-file: 'go.work'
           check-latest: true
+          cache-dependency-path: "go.work.sum"
 
       - name: build local probers
         if: steps.changes.outputs.tools == 'true'
