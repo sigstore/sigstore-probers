@@ -17,7 +17,7 @@ permissions:
 jobs:
   rate-limiting:
     timeout-minutes: 10
-    name: Nginx Rate Limiting Test
+    name: Rate Limiting Test
     runs-on: ubuntu-latest
     outputs:
       rekor_v1_staging: ${{ steps.rekor_v1_staging.outputs.rekor_v1_staging }}
