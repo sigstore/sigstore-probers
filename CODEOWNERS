@@ -1,3 +1,2 @@
 * @sigstore/sigstore-oncall
-
-/.github/ @sigstore/dep-maintainers
+* @sigstore/infrastructure-team
