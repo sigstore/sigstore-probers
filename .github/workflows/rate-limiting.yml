@@ -16,18 +16,16 @@ permissions:
 
 jobs:
   rate-limiting:
+    strategy:
+      matrix:
+        env: [production, staging]
+      fail-fast: false
     timeout-minutes: 10
-    name: Rate Limiting Test
+    name: Rate Limiting Test (${{ matrix.env }})
     runs-on: ubuntu-latest
     outputs:
-      rekor_v1_staging: ${{ steps.rekor_v1_staging.outputs.rekor_v1_staging }}
-      rekor_v2_staging: ${{ steps.rekor_v2_staging.outputs.rekor_v2_staging }}
-      fulcio_staging: ${{ steps.fulcio_staging.outputs.fulcio_staging }}
-      tsa_staging: ${{ steps.tsa_staging.outputs.tsa_staging }}
-      rekor_v1_prod: ${{ steps.rekor_v1_prod.outputs.rekor_v1_prod }}
-      rekor_v2_prod: ${{ steps.rekor_v2_prod.outputs.rekor_v2_prod }}
-      fulcio_prod: ${{ steps.fulcio_prod.outputs.fulcio_prod }}
-      summary: ${{ steps.msg.outputs.summary}}
+      summary: ${{ steps.prober.outputs.summary }}
+      result: ${{ job.status }}
     steps:
       - name: Extract relevant binaries
         run: |
@@ -36,78 +34,50 @@ jobs:
           docker create --name binaries ghcr.io/sigstore/sigstore-probers /usr/local/bin/rate-limiting
           docker cp binaries:/usr/local/bin/rate-limiting /usr/local/bin/
 
-      - name: Rate Limit Rekor v1 Staging
-        id: rekor_v1_staging
-        continue-on-error: true
+      - name: Run Rate Limiting Prober for ${{ matrix.env }}
+        id: prober
         run: |
-          echo "rekor_v1_staging=success" >> $GITHUB_OUTPUT
-          rate-limiting --url https://rekor.sigstage.dev/api/v1/log || echo "rekor_v1_staging=failed" >> $GITHUB_OUTPUT
-      - name: Rate Limit Rekor v2 Staging
-        id: rekor_v2_staging
-        continue-on-error: true
-        run: |
-          echo "rekor_v2_staging=success" >> $GITHUB_OUTPUT
-          rate-limiting --url https://log2025-alpha3.rekor.sigstage.dev/healthz || echo "rekor_v2_staging=failed" >> $GITHUB_OUTPUT
-      - name: Rate Limit Fulcio Staging
-        id: fulcio_staging
-        continue-on-error: true
-        run: |
-          echo "fulcio_staging=success" >> $GITHUB_OUTPUT
-          rate-limiting --url https://fulcio.sigstage.dev/api/v1/rootCert || echo "fulcio_staging=failed" >> $GITHUB_OUTPUT
-      - name: Rate Limit TSA Staging
-        id: tsa_staging
-        continue-on-error: true
-        run: |
-          echo "tsa_staging=success" >> $GITHUB_OUTPUT
-          rate-limiting --url https://timestamp.sigstage.dev/api/v1/timestamp/certchain || echo "tsa_staging=failed" >> $GITHUB_OUTPUT
-      - name: Rate Limit Rekor v1 Prod
-        id: rekor_v1_prod
-        continue-on-error: true
-        run: |
-          echo "rekor_v1_prod=success" >> $GITHUB_OUTPUT
-          rate-limiting --url https://rekor.sigstore.dev/api/v1/log || echo "rekor_v1_prod=failed" >> $GITHUB_OUTPUT
-      - name: Rate Limit Rekor v2 Prod
-        id: rekor_v2_prod
-        continue-on-error: true
-        run: |
-          echo "rekor_v2_prod=success" >> $GITHUB_OUTPUT
-          rate-limiting --url https://log2025-1.rekor.sigstore.dev/healthz || echo "rekor_v2_prod=failed" >> $GITHUB_OUTPUT
-      - name: Rate Limit Fulcio Prod
-        id: fulcio_prod
-        continue-on-error: true
-        run: |
-          echo "fulcio_prod=success" >> $GITHUB_OUTPUT
-          rate-limiting --url https://fulcio.sigstore.dev/api/v1/rootCert || echo "fulcio_prod=failed" >> $GITHUB_OUTPUT
-      - name: Set messages
-        id: msg
-        run: |
-          if [ "${{ inputs.triggerPagerDutyTest }}" == "true" ]; then
-            echo "summary=Test Notification" >> $GITHUB_OUTPUT;
-          else
-            echo "summary=Rate Limiting Prober Failed" >> $GITHUB_OUTPUT;
-          fi
+          PROBER_OUTPUT_FILE=$(mktemp)
+          set +e
+          rate-limiting ${{ matrix.env == 'staging' && '--staging' }} &> "${PROBER_OUTPUT_FILE}"
+          EXIT_CODE=$?
+          set -e
+          PROBER_OUTPUT=$(cat "${PROBER_OUTPUT_FILE}")
+          echo "${PROBER_OUTPUT}"
+          echo "summary<<EOF" >> $GITHUB_OUTPUT
+          echo "${PROBER_OUTPUT}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          exit $EXIT_CODE
+
+  process-results:
+    if: always()
+    runs-on: ubuntu-latest
+    needs: rate-limiting
+    outputs:
+      overall_result: ${{ (contains(needs.rate-limiting.*.result, 'failure') || contains(needs.rate-limiting.*.result, 'cancelled')) && 'failure' || 'success' }}
+      details: ${{ toJSON(needs.rate-limiting) }}
+    steps:
+      - name: Aggregate matrix results
+        run: echo "Aggregating results from the rate-limiting matrix."
 
   pagerduty-notification:
-    if: github.event.inputs.triggerPagerDutyTest=='true' || failure()
-    needs: [rate-limiting]
+    if: github.event.inputs.triggerPagerDutyTest=='true' || (needs.process-results.outputs.overall_result == 'failure')
+    needs: [process-results]
     uses: ./.github/workflows/reusable-pager.yml
     secrets:
       PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
     with:
-      summary: ${{ needs.rate-limiting.outputs.summary }}
+      summary: ${{ inputs.triggerPagerDutyTest == 'true' && 'Test Notification' || 'Rate Limiting Prober Failed' }}
       component: "rate-limiting prober"
       group: "production and staging"
-      details: >
+      details: |
         {
-          "Failure URL": "https://github.com/sigstore/public-good-instance/actions/runs/${{ github.run_id }}",
+          "Failure URL": "https://github.com/sigstore/sigstore-probers/actions/runs/${{ github.run_id }}",
           "Commit": "${{ github.sha }}",
-          "Rekor v1 Staging": "${{ needs.rate-limiting.outputs.rekor_v1_staging }}",
-          "Rekor v1 Prod": "${{ needs.rate-limiting.outputs.rekor_v1_prod }}",
-          "Rekor v2 Prod": "${{ needs.rate-limiting.outputs.rekor_v2_prod }}",
-          "Rekor v2 Staging": "${{ needs.rate-limiting.outputs.rekor_v2_staging }}",
-          "Fulcio Staging": "${{ needs.rate-limiting.outputs.fulcio_staging }}",
-          "Fulcio Prod": "${{ needs.rate-limiting.outputs.fulcio_prod }}",
-          "Timestamp Staging": "${{ needs.rate-limiting.outputs.tsa_staging }}"
+          "Production Status": "${{ fromJSON(needs.process-results.outputs.details).production.result }}",
+          "Production Output": ${{ toJSON(fromJSON(needs.process-results.outputs.details).production.outputs.summary) }},
+          "Staging Status": "${{ fromJSON(needs.process-results.outputs.details).staging.result }}",
+          "Staging Output": ${{ toJSON(fromJSON(needs.process-results.outputs.details).staging.outputs.summary) }},
         }
       links: >
         [
