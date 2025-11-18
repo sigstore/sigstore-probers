@@ -70,14 +70,14 @@ jobs:
       summary: ${{ inputs.triggerPagerDutyTest == 'true' && 'Test Notification' || 'Rate Limiting Prober Failed' }}
       component: "rate-limiting prober"
       group: "production and staging"
-      details: |
+      details: >
         {
           "Failure URL": "https://github.com/sigstore/sigstore-probers/actions/runs/${{ github.run_id }}",
           "Commit": "${{ github.sha }}",
           "Production Status": "${{ fromJSON(needs.process-results.outputs.details).production.result }}",
           "Production Output": ${{ toJSON(fromJSON(needs.process-results.outputs.details).production.outputs.summary) }},
           "Staging Status": "${{ fromJSON(needs.process-results.outputs.details).staging.result }}",
-          "Staging Output": ${{ toJSON(fromJSON(needs.process-results.outputs.details).staging.outputs.summary) }},
+          "Staging Output": ${{ toJSON(fromJSON(needs.process-results.outputs.details).staging.outputs.summary) }}
         }
       links: >
         [
