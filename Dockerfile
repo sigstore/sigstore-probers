@@ -16,7 +16,7 @@ RUN cd prober/ctlog && go build -trimpath -ldflags="-w -s" -o ${TOOLS_DIR}/ctlog
 RUN cd pager-duty && go build -trimpath -ldflags="-w -s" -o ${TOOLS_DIR}/pager .
 RUN cd prober/tiles-fsck && go build -trimpath -ldflags="-w -s" -o ${TOOLS_DIR}/tiles-fsck .
 
-FROM gcr.io/distroless/static-debian12:nonroot@sha256:2b7c93f6d6648c11f0e80a48558c8f77885eb0445213b8e69a6a0d7c89fc6ae4
+FROM gcr.io/distroless/static-debian13:nonroot@sha256:b5b9fd04c8dcf72a173183c0b7dee47e053e002246b308a59f3441db7b8b9cc4
 
 ARG TOOLS_DIR
 COPY --from=go-builder ${TOOLS_DIR}/* /usr/local/bin/
