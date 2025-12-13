@@ -142,7 +142,10 @@ func rateLimit(url string) error {
 			for range jobs {
 				defer wg.Done()
 
-				resp, err := client.Get(url)
+				req, _ := http.NewRequest("GET", url, nil)
+				req.Header.Set("User-Agent", "sigstore-probers/rate-limit-test")
+
+				resp, err := client.Do(req)
 				if err != nil {
 					fmt.Fprintln(os.Stderr, err)
 					atomic.AddUint64(&errCount, 1)
