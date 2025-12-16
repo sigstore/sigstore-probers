@@ -1,4 +1,4 @@
-module github.com/sigstore/scaffolding/tools/prober
+module github.com/sigstore/sigstore-probers/prober/prober
 
 go 1.25.0
 

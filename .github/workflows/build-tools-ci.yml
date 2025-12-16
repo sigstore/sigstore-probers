@@ -58,6 +58,7 @@ jobs:
           go build ./prober/rate-limiting.go
           go build ./prober/ctlog/ctlog-sth.go
           go build ./prober/tiles-fsck/
+          go build -o probe ./prober/prober/
 
       - name: build & test pager-duty
         if: steps.changes.outputs.tools == 'true'

@@ -6,12 +6,12 @@ on:
     branches:
       - main
     paths:
-    - 'tools/prober/cmd/prober/**'
+    - 'prober/prober/**'
   pull_request:
     branches:
       - main
     paths:
-    - 'tools/prober/cmd/prober/**'
+    - 'prober/prober/**'
 
 permissions:
   contents: read
@@ -44,7 +44,7 @@ jobs:
           check-latest: true
 
       - name: Build prober test
-        run: go build ./tools/prober/cmd/prober
+        run: go build -o prober-test ./prober/prober
 
       - name: Get test OIDC token
         uses: sigstore-conformance/extremely-dangerous-public-oidc-beacon@main
@@ -55,4 +55,4 @@ jobs:
 
       - name: Run prober test
         id: prober-test
-        run: ./prober --one-time --write-prober --logStyle dev ${{ matrix.args }}
+        run: ./prober-test --one-time --write-prober --logStyle dev ${{ matrix.args }}

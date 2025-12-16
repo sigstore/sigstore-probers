@@ -1426,8 +1426,6 @@ github.com/sergi/go-diff v1.4.0 h1:n/SP9D5ad1fORl+llWyN+D6qoUETXNZARKjyY2/KVCw=
 github.com/sergi/go-diff v1.4.0/go.mod h1:A0bzQcvG0E7Rwjx0REVgAGH58e96+X0MeOfepqsbeW4=
 github.com/shibumi/go-pathspec v1.3.0 h1:QUyMZhFo0Md5B8zV8x2tesohbb5kfbpTi9rBnKh5dkI=
 github.com/shibumi/go-pathspec v1.3.0/go.mod h1:Xutfslp817l2I1cZvgcfeMQJG5QnU2lh5tVaaMCl3jE=
-github.com/sigstore/cosign/v2 v2.6.1 h1:7Wf67ENNCjg+1fLqHRPgKUNaCCnCavnEfCe1LApOoIo=
-github.com/sigstore/cosign/v2 v2.6.1/go.mod h1:L37doL+7s6IeCXFODV2J7kds5Po/srlVzA//++YqAJ8=
 github.com/sigstore/cosign/v3 v3.0.3-0.20251027210520-d470294ce624 h1:p+q7m4MkSArnXhSmOXH46meUtluuVD5YPfjQmrgGKio=
 github.com/sigstore/cosign/v3 v3.0.3-0.20251027210520-d470294ce624/go.mod h1:vj3u/TthPe8LvUEspEIKKLHiLuOwAUxkuPhv5rOjS88=
 github.com/sigstore/fulcio v1.7.1 h1:RcoW20Nz49IGeZyu3y9QYhyyV3ZKQ85T+FXPKkvE+aQ=
@@ -1440,8 +1438,6 @@ github.com/sigstore/rekor-tiles v0.1.11 h1:0NAJ2EhD1r6DH95FUuDTqUDd+c31LSKzoXGW5
 github.com/sigstore/rekor-tiles v0.1.11/go.mod h1:eGIeqASh52pgWpmp/j5KZDjmKdVwob7eTYskVVRCu5k=
 github.com/sigstore/rekor-tiles/v2 v2.0.0 h1:RDi03W/k7TOB+1StMOVdUaufKqtFImrh0KpOEPwsiV0=
 github.com/sigstore/rekor-tiles/v2 v2.0.0/go.mod h1:1HyDsS2pQg36OoEZ0SeGmQIGflxK5W3nWW1Z+G6IWA8=
-github.com/sigstore/scaffolding v0.7.25 h1:5qEpqio8nCQjXrIGcEzDK2rbT8VvK1q5tI/q3mfADMc=
-github.com/sigstore/scaffolding v0.7.25/go.mod h1:mil6mLKWR+2qf5Zso5v9dzYpDkAHVoajz0HQEH+f8XE=
 github.com/sigstore/sigstore v1.9.6-0.20250729224751-181c5d3339b3 h1:IEhSeWfhTd0kaBpHUXniWU2Tl5K5OUACN69mi1WGd+8=
 github.com/sigstore/sigstore v1.9.6-0.20250729224751-181c5d3339b3/go.mod h1:JuqyPRJYnkNl6OTnQiG503EUnKih4P5EV6FUw+1B0iA=
 github.com/sigstore/sigstore-go v1.1.3 h1:5lKcbXZa5JC7wb/UVywyCulccfYTUju1D5h4tkn+fXE=
