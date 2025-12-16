@@ -212,14 +212,12 @@ require (
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
-	github.com/sigstore/cosign/v2 v2.6.1 // indirect
 	github.com/sigstore/cosign/v3 v3.0.3-0.20251027210520-d470294ce624 // indirect
 	github.com/sigstore/fulcio v1.7.1 // indirect
 	github.com/sigstore/protobuf-specs v0.5.0 // indirect
 	github.com/sigstore/rekor v1.4.2 // indirect
 	github.com/sigstore/rekor-tiles v0.1.11 // indirect
 	github.com/sigstore/rekor-tiles/v2 v2.0.0 // indirect
-	github.com/sigstore/scaffolding v0.7.25 // indirect
 	github.com/sigstore/sigstore v1.9.6-0.20250729224751-181c5d3339b3 // indirect
 	github.com/sigstore/sigstore-go v1.1.3 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/aws v1.9.5 // indirect
@@ -307,5 +305,4 @@ require (
 tool (
 	github.com/google/go-containerregistry/cmd/crane
 	github.com/sigstore/cosign/v3/cmd/cosign
-	github.com/sigstore/scaffolding/cmd/prober
 )
