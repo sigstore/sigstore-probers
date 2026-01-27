@@ -11,11 +11,13 @@ import (
 	ct "github.com/google/certificate-transparency-go"
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
+	f_log "github.com/transparency-dev/formats/log"
+	tdnote "github.com/transparency-dev/formats/note"
 )
 
 var (
-	shard string
-	env   string
+	shard      string
+	env        string
 	retryCount uint
 )
 
@@ -59,31 +61,62 @@ MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8gEDKNme8AnXuPBgHjrtXdS6miHq
 c24CRblNEOFpiJRngeq8Ko73Y+K18yRYVf1DXD4AVLwvKyzdNdl5n0jUSQ==
 -----END PUBLIC KEY-----`
 
-type environmentInfo struct {
-	URL        string
-	ShardToKey map[string]string
+// log2026-1.ctfe.sigstage.dev
+const ctStagingLog2026_1 = `-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEv8+Fp+klTMlOd0FU+eekotPzlaF9
+orvv9ZgdLXq5+MmoGThLNigXIapXjW0lujsU6+ZHKZ6UPzSuz+V8YxLoQw==
+-----END PUBLIC KEY-----`
+
+type shardInfo struct {
+	url                 string
+	key                 string
+	origin              string
+	sthEndpoint         string
+	checkpointEndpoint  string
+	writeHealthEndpoint string
 }
 
-// envToShardToKey holds each environment's URL, shards, and public keys
-var envToShardToKey = map[string]environmentInfo{
+// envToShardToInfo holds each environment's URL, shards, public keys and read/write paths
+var envToShardInfo = map[string]map[string]shardInfo{
 	"production": {
-		URL: "https://ctfe.sigstore.dev",
-		ShardToKey: map[string]string{
-			"test": ctTest,
-			"2022": ct2022,
+		"test": shardInfo{
+			url:         "https://ctfe.sigstore.dev",
+			key:         ctTest,
+			sthEndpoint: "test/ct/v1/get-sth",
+		},
+		"2022": shardInfo{
+			url:         "https://ctfe.sigstore.dev",
+			key:         ct2022,
+			sthEndpoint: "2022/ct/v1/get-sth",
 		},
 	},
 	"staging": {
-		URL: "https://ctfe.sigstage.dev",
-		ShardToKey: map[string]string{
-			"test":   ctStagingTest,
-			"2022":   ctStaging2022,
-			"2022-2": ctStaging2022_2,
+		"test": shardInfo{
+			url:         "https://ctfe.sigstage.dev",
+			key:         ctStagingTest,
+			sthEndpoint: "test/ct/v1/get-sth",
+		},
+		"2022": shardInfo{
+			url:         "https://ctfe.sigstage.dev",
+			key:         ctStaging2022,
+			sthEndpoint: "2022/ct/v1/get-sth",
+		},
+		"2022-2": shardInfo{
+			url:         "https://ctfe.sigstage.dev",
+			key:         ctStaging2022_2,
+			sthEndpoint: "2022-2/ct/v1/get-sth",
+		},
+		"log2026-1": shardInfo{
+			url:                 "https://log2026-1.ctfe.sigstage.dev",
+			origin:              "log2026-1.ctfe.sigstage.dev",
+			key:                 ctStagingLog2026_1,
+			checkpointEndpoint:  "checkpoint",
+			writeHealthEndpoint: "ct/v1/get-roots",
 		},
 	},
 }
 
-const sthPath = "/ct/v1/get-sth"
+var retryClient *retryablehttp.Client
 
 func main() {
 	flag.StringVar(&shard, "shard", "", "The shard of the STH to get")
@@ -98,53 +131,69 @@ func main() {
 		panic("Need to specify --shard")
 	}
 
-	envInfo, ok := envToShardToKey[env]
+	retryClient = retryablehttp.NewClient()
+	retryClient.RetryMax = int(retryCount)
+
+	envInfo, ok := envToShardInfo[env]
 	if !ok {
 		panic(fmt.Sprintf("environment %s not supported", env))
 	}
 
-	url := envInfo.URL
-	pemPubKey, ok := envInfo.ShardToKey[shard]
+	shardInfo, ok := envInfo[shard]
 	if !ok {
 		panic(fmt.Sprintf("shard %s not supported for env %s", shard, env))
 	}
+	url := shardInfo.url
+	pemPubKey := shardInfo.key
 
-	sthURL := fmt.Sprintf("%s/%s%s", strings.TrimRight(url, "/"), shard, sthPath)
-	sth, err := getSTH(context.TODO(), sthURL)
-	if err != nil {
-		panic(fmt.Sprintf("failed to get STH: %v", err))
+	ctx := context.Background()
+
+	switch {
+	case shardInfo.sthEndpoint != "":
+		sthURL := fmt.Sprintf("%s/%s", strings.TrimRight(url, "/"), shardInfo.sthEndpoint)
+		sth, err := getSTH(ctx, sthURL)
+		if err != nil {
+			panic(fmt.Sprintf("failed to get STH: %v", err))
+		}
+		fmt.Printf("received STH: %+v\n", sth)
+		err = verifySTH(pemPubKey, sth)
+		if err != nil {
+			panic(err)
+		}
+	case shardInfo.checkpointEndpoint != "":
+		cpURL := fmt.Sprintf("%s/%s", strings.TrimRight(url, "/"), shardInfo.checkpointEndpoint)
+		cp, err := getCheckpoint(ctx, cpURL)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("received checkpoint: %s\n", cp)
+		err = verifyCheckpoint(cp, shardInfo.origin, pemPubKey)
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	fmt.Printf("received STH: %+v\n", sth)
-
-	if sth.Timestamp == 0 {
-		panic("got no timestamp from the STH")
+	if shardInfo.writeHealthEndpoint != "" {
+		url := fmt.Sprintf("%s/%s", strings.TrimRight(url, "/"), shardInfo.writeHealthEndpoint)
+		_, err := httpGet(ctx, url)
+		if err != nil {
+			panic(fmt.Sprintf("could not reach write service at %s: %v", shardInfo.writeHealthEndpoint, err))
+		}
+		fmt.Println("verified write service health")
 	}
-
-	// verify signature on STH
-	pubKey, err := cryptoutils.UnmarshalPEMToPublicKey([]byte(pemPubKey))
-	if err != nil {
-		panic("unable to unmarshal PEM public key")
-	}
-	v, err := ct.NewSignatureVerifier(pubKey)
-	if err != nil {
-		panic("unable to create verifier")
-	}
-	if err := v.VerifySTHSignature(*sth); err != nil {
-		panic("unable to verify STH!")
-	}
-	fmt.Println("STH verified")
 }
 
-func getSTH(ctx context.Context, url string) (*ct.SignedTreeHead, error) {
-	retryClient := retryablehttp.NewClient()
-	retryClient.RetryMax = int(retryCount)
-
+func httpGet(ctx context.Context, url string) ([]byte, error) {
 	req, err := retryClient.Get(url)
 	if err != nil {
 		return nil, err
 	}
-	body, err := io.ReadAll(req.Body)
+	defer req.Body.Close()
+	return io.ReadAll(req.Body)
+}
+
+func getSTH(ctx context.Context, url string) (*ct.SignedTreeHead, error) {
+	body, err := httpGet(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -153,4 +202,54 @@ func getSTH(ctx context.Context, url string) (*ct.SignedTreeHead, error) {
 		return nil, err
 	}
 	return &sth, nil
+}
+
+func verifySTH(pemPubKey string, sth *ct.SignedTreeHead) error {
+	if sth.Timestamp == 0 {
+		return fmt.Errorf("got no timestamp from the STH")
+	}
+
+	// verify signature on STH
+	pubKey, err := cryptoutils.UnmarshalPEMToPublicKey([]byte(pemPubKey))
+	if err != nil {
+		return fmt.Errorf("unable to unmarshal PEM public key: %w", err)
+	}
+	v, err := ct.NewSignatureVerifier(pubKey)
+	if err != nil {
+		return fmt.Errorf("unable to create verifier: %w", err)
+	}
+	if err := v.VerifySTHSignature(*sth); err != nil {
+		return fmt.Errorf("unable to verify STH: %w", err)
+	}
+	fmt.Println("STH verified")
+	return nil
+}
+
+func getCheckpoint(ctx context.Context, url string) ([]byte, error) {
+	body, err := httpGet(ctx, url)
+	if err != nil {
+		return nil, fmt.Errorf("fetching checkpoint: %w", err)
+	}
+	return body, nil
+}
+
+func verifyCheckpoint(checkpoint []byte, origin, pemPubKey string) error {
+	pubKey, err := cryptoutils.UnmarshalPEMToPublicKey([]byte(pemPubKey))
+	if err != nil {
+		return fmt.Errorf("unable to unmarshal PEM public key: %w", err)
+	}
+	verifierKey, err := tdnote.RFC6962VerifierString(origin, pubKey)
+	if err != nil {
+		return fmt.Errorf("creating verifier string: %w", err)
+	}
+	verifier, err := tdnote.NewVerifier(verifierKey)
+	if err != nil {
+		return fmt.Errorf("creating note verifier: %w", err)
+	}
+	_, _, _, err = f_log.ParseCheckpoint(checkpoint, verifier.Name(), verifier)
+	if err != nil {
+		return fmt.Errorf("unable to verify checkpoint: %w", err)
+	}
+	fmt.Println("Checkpoint verified")
+	return nil
 }
