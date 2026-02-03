@@ -35,9 +35,12 @@ jobs:
         - test
         - 2022
         - 2022-2
+        - log2026-1
         exclude:
         - env: production
           shard: 2022-2
+        - env: production
+          shard: log2026-1
 
     steps:
       - name: Extract relevant binaries
