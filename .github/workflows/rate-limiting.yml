@@ -29,9 +29,9 @@ jobs:
     steps:
       - name: Extract relevant binaries
         run: |
-          docker pull ghcr.io/sigstore/sigstore-probers:latest
+          docker pull ghcr.io/sigstore/sigstore-probers/tools:latest
           # the last argument in the next command is not used, it is required because the container doesn't have a default command
-          docker create --name binaries ghcr.io/sigstore/sigstore-probers /usr/local/bin/rate-limiting
+          docker create --name binaries ghcr.io/sigstore/sigstore-probers/tools /usr/local/bin/rate-limiting
           docker cp binaries:/usr/local/bin/rate-limiting /usr/local/bin/
 
       - name: Run Rate Limiting Prober for ${{ matrix.env }}
