@@ -42,9 +42,9 @@ jobs:
     steps:
       - name: Extract relevant binaries
         run: |
-          docker pull ghcr.io/sigstore/sigstore-probers:latest
+          docker pull ghcr.io/sigstore/sigstore-probers/tools:latest
           # the last argument in the next command is not used, it is required because the container doesn't have a default command
-          docker create --name binaries ghcr.io/sigstore/sigstore-probers /usr/local/bin/tiles-fsck
+          docker create --name binaries ghcr.io/sigstore/sigstore-probers/tools /usr/local/bin/tiles-fsck
           docker cp binaries:/usr/local/bin/tiles-fsck /usr/local/bin/
 
       - name: Run Merkle Tree Consistency Check - ${{ matrix.url }}
