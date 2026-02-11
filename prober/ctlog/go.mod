@@ -6,7 +6,7 @@ require (
 	github.com/google/certificate-transparency-go v1.3.2
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/sigstore/sigstore v1.10.4
-	github.com/transparency-dev/formats v0.0.0-20260126105629-a1e81f2894be
+	github.com/transparency-dev/formats v0.1.0
 )
 
 require (
