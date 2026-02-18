@@ -20,12 +20,8 @@ set -o pipefail
 
 : "${GIT_HASH:?Environment variable empty or not defined.}"
 : "${GIT_VERSION:?Environment variable empty or not defined.}"
-
-if [[ ! -f $ARTIFACT ]]; then
-    echo "$ARTIFACT not found"
-    exit 1
-fi
+: "${ARTIFACT:?Environment variable empty or not defined.}"
 
 echo "Signing images with Keyless..."
-readarray -t file_args < <(cat "$ARTIFACT")
-cosign sign --timeout 5m --yes -a GIT_HASH="$GIT_HASH" -a GIT_VERSION="$GIT_VERSION" "${file_args[@]}"
+readarray -t file_args < <(cat "${ARTIFACT}")
+cosign sign --timeout 5m --yes -a GIT_HASH="${GIT_HASH}" -a GIT_VERSION="${GIT_VERSION}" "${file_args[@]}"

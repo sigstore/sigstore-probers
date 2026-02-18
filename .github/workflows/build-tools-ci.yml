@@ -16,6 +16,8 @@ name: build-tools-ci
 
 on:
   pull_request:
+    branches:
+      - main
 
 defaults:
   run:
