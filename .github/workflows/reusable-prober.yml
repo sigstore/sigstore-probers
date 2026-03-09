@@ -151,7 +151,10 @@ jobs:
       - name: Confirm Github OIDC Server is Available
         continue-on-error: true
         run: |
-          curl -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" $ACTIONS_ID_TOKEN_REQUEST_URL&audience=sigstore
+          curl \
+            --fail-with-body \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sigstore"
 
       # Since the server is down, we want to ignore the failure in this workflow
       # and skip paging PagerDuty
