@@ -3,7 +3,7 @@ name: Production Sigstore Prober
 on:
   workflow_dispatch:
     inputs:
-      triggerPagerDutyTest:
+      trigger_pager_duty_test:
         description: 'Trigger PagerDuty as a test'
         required: false
         type: boolean
@@ -33,8 +33,8 @@ jobs:
     secrets:
       PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
     with:
-      alertOnFailure: false
-      triggerPagerDutyTest: ${{ github.event.inputs.triggerPagerDutyTest }}
+      alert_on_failure: false
+      trigger_pager_duty_test: ${{ github.event.inputs.trigger_pager_duty_test }}
       tuf_repo: "https://tuf-repo-cdn.sigstore.dev"
       rekor_v2_url: ${{ github.event.inputs.rekor_v2_url }}
       rekor_v2_public_key: ${{ github.event.inputs.rekor_v2_public_key }}
@@ -60,8 +60,8 @@ jobs:
     secrets:
       PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
     with:
-      alertOnFailure: true
-      triggerPagerDutyTest: ${{ github.event.inputs.triggerPagerDutyTest }}
+      alert_on_failure: true
+      trigger_pager_duty_test: ${{ github.event.inputs.trigger_pager_duty_test }}
       tuf_repo: "https://tuf-repo-cdn.sigstore.dev"
       rekor_v2_url: ${{ github.event.inputs.rekor_v2_url }}
       rekor_v2_public_key: ${{ github.event.inputs.rekor_v2_public_key }}
