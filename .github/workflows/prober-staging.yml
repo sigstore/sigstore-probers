@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       triggerPagerDutyTest:
-        description: 'Trigger PagerDuty test message'
+        description: 'Trigger PagerDuty as a test'
         required: false
         type: boolean
       rekor_v2_url:

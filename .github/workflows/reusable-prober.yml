@@ -28,9 +28,9 @@ on:
         default: '.github/assets/sigstore.root.json'
         description: "path to the tuf root"
       triggerPagerDutyTest:
-        description: 'Trigger PagerDuty test message'
+        description: 'If true, trigger PagerDuty as a test'
         required: false
-        type: string
+        type: boolean
       github_issues_repo:
         required: false
         type: string
@@ -338,7 +338,7 @@ jobs:
           fi
 
   pagerduty-notification:
-    if: github.event.inputs.triggerPagerDutyTest=='true' || (failure() && needs.process-e2e-results.outputs.skip_pagerduty != 'true')
+    if: inputs.triggerPagerDutyTest || (failure() && needs.process-e2e-results.outputs.skip_pagerduty != 'true')
     needs: [sigstore-probe, root-probe, rekor-fulcio-e2e, compute-summary-msg, process-e2e-results]
     uses: ./.github/workflows/reusable-pager.yml
     permissions:
