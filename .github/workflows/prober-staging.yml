@@ -3,8 +3,8 @@ name: Staging Sigstore Prober
 on:
   workflow_dispatch:
     inputs:
-      triggerPagerDutyTest:
-        description: 'Trigger PagerDuty test message'
+      trigger_pager_duty_test:
+        description: 'Trigger PagerDuty as a test'
         required: false
         type: boolean
       rekor_v2_url:
@@ -23,18 +23,49 @@ permissions: {}
 
 jobs:
   prober:
+    name: Initial prober run
     uses: ./.github/workflows/reusable-prober.yml
-    secrets:
-      PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
     permissions:
       id-token: write
       contents: read
       packages: write
       issues: write
+    secrets:
+      PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
     with:
       enable_staging: true
       tuf_repo: "https://tuf-repo-cdn.sigstage.dev"
       tuf_root_path: ".github/assets/sigstage.root.json"
-      triggerPagerDutyTest: ${{ github.event.inputs.triggerPagerDutyTest }}
+      alert_on_failure: false
+      trigger_pager_duty_test: ${{ github.event.inputs.trigger_pager_duty_test }}
+      rekor_v2_url: ${{ github.event.inputs.rekor_v2_url }}
+      rekor_v2_public_key: ${{ github.event.inputs.rekor_v2_public_key }}
+
+  wait-on-failure:
+    name: Let GitHub take a breath before retrying prober
+    needs: prober
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - run: sleep 30
+
+  prober-with-alerts:
+    name: Run prober after initial failure, alert on failure
+    uses: ./.github/workflows/reusable-prober.yml
+    needs: [prober, wait-on-failure]
+    if: failure()
+    permissions:
+      id-token: write
+      contents: read
+      packages: write
+      issues: write
+    secrets:
+      PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
+    with:
+      enable_staging: true
+      tuf_repo: "https://tuf-repo-cdn.sigstage.dev"
+      tuf_root_path: ".github/assets/sigstage.root.json"
+      alert_on_failure: true
+      trigger_pager_duty_test: ${{ github.event.inputs.trigger_pager_duty_test }}
       rekor_v2_url: ${{ github.event.inputs.rekor_v2_url }}
       rekor_v2_public_key: ${{ github.event.inputs.rekor_v2_public_key }}

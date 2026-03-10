@@ -27,10 +27,15 @@ on:
         type: string
         default: '.github/assets/sigstore.root.json'
         description: "path to the tuf root"
-      triggerPagerDutyTest:
-        description: 'Trigger PagerDuty test message'
+      alert_on_failure:
+        description: 'If true, Use Pagerduty and GH Issues to alert on failure'
         required: false
-        type: string
+        default: true
+        type: boolean
+      trigger_pager_duty_test:
+        description: 'If true, trigger PagerDuty as a test'
+        required: false
+        type: boolean
       github_issues_repo:
         required: false
         type: string
@@ -327,7 +332,7 @@ jobs:
         id: msg
         if: success() || failure()
         run: |
-          if [ "${{ inputs.triggerPagerDutyTest }}" == "true" ]; then
+          if [ "${{ inputs.trigger_pager_duty_test }}" == "true" ]; then
             echo "summary=Test Notification" >> $GITHUB_OUTPUT
           else
             echo "summary=Prober Failed" >> $GITHUB_OUTPUT
@@ -338,7 +343,7 @@ jobs:
           fi
 
   pagerduty-notification:
-    if: github.event.inputs.triggerPagerDutyTest=='true' || (failure() && needs.process-e2e-results.outputs.skip_pagerduty != 'true')
+    if: inputs.trigger_pager_duty_test || (inputs.alert_on_failure && failure() && needs.process-e2e-results.outputs.skip_pagerduty != 'true')
     needs: [sigstore-probe, root-probe, rekor-fulcio-e2e, compute-summary-msg, process-e2e-results]
     uses: ./.github/workflows/reusable-pager.yml
     permissions:
@@ -373,7 +378,7 @@ jobs:
         ]
 
   github-issue:
-    if: always() && (needs.sigstore-probe.result == 'failure' || needs.root-probe.result == 'failure' || needs.process-e2e-results.outputs.result == 'failure')
+    if: always() && inputs.alert_on_failure && (needs.sigstore-probe.result == 'failure' || needs.root-probe.result == 'failure' || needs.process-e2e-results.outputs.result == 'failure')
     runs-on: ubuntu-latest
     needs: [sigstore-probe, root-probe, rekor-fulcio-e2e, compute-summary-msg, process-e2e-results]
     permissions:
