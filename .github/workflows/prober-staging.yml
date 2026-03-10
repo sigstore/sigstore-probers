@@ -37,9 +37,10 @@ jobs:
       tuf_repo: "https://tuf-repo-cdn.sigstage.dev"
       tuf_root_path: ".github/assets/sigstage.root.json"
       alert_on_failure: false
-      trigger_pager_duty_test: ${{ github.event.inputs.trigger_pager_duty_test }}
-      rekor_v2_url: ${{ github.event.inputs.rekor_v2_url }}
-      rekor_v2_public_key: ${{ github.event.inputs.rekor_v2_public_key }}
+      # on scheduled runs inputs are null: handle this case
+      trigger_pager_duty_test: ${{ inputs.trigger_pager_duty_test == true }}
+      rekor_v2_url: ${{ inputs.rekor_v2_url }}
+      rekor_v2_public_key: ${{ inputs.rekor_v2_public_key }}
 
   wait-on-failure:
     name: Let GitHub take a breath before retrying prober
@@ -66,6 +67,5 @@ jobs:
       tuf_repo: "https://tuf-repo-cdn.sigstage.dev"
       tuf_root_path: ".github/assets/sigstage.root.json"
       alert_on_failure: true
-      trigger_pager_duty_test: ${{ github.event.inputs.trigger_pager_duty_test }}
-      rekor_v2_url: ${{ github.event.inputs.rekor_v2_url }}
-      rekor_v2_public_key: ${{ github.event.inputs.rekor_v2_public_key }}
+      rekor_v2_url: ${{ inputs.rekor_v2_url }}
+      rekor_v2_public_key: ${{ inputs.rekor_v2_public_key }}

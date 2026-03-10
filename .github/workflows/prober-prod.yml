@@ -34,10 +34,11 @@ jobs:
       PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
     with:
       alert_on_failure: false
-      trigger_pager_duty_test: ${{ github.event.inputs.trigger_pager_duty_test }}
+      # on scheduled runs inputs are null: handle this case
+      trigger_pager_duty_test: ${{ inputs.trigger_pager_duty_test == true }}
       tuf_repo: "https://tuf-repo-cdn.sigstore.dev"
-      rekor_v2_url: ${{ github.event.inputs.rekor_v2_url }}
-      rekor_v2_public_key: ${{ github.event.inputs.rekor_v2_public_key }}
+      rekor_v2_url: ${{ inputs.rekor_v2_url }}
+      rekor_v2_public_key: ${{ inputs.rekor_v2_public_key }}
 
   wait-on-failure:
     name: Let GitHub take a breath before retrying prober
@@ -61,7 +62,6 @@ jobs:
       PAGERDUTY_INTEGRATION_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
     with:
       alert_on_failure: true
-      trigger_pager_duty_test: ${{ github.event.inputs.trigger_pager_duty_test }}
       tuf_repo: "https://tuf-repo-cdn.sigstore.dev"
-      rekor_v2_url: ${{ github.event.inputs.rekor_v2_url }}
-      rekor_v2_public_key: ${{ github.event.inputs.rekor_v2_public_key }}
+      rekor_v2_url: ${{ inputs.rekor_v2_url }}
+      rekor_v2_public_key: ${{ inputs.rekor_v2_public_key }}
