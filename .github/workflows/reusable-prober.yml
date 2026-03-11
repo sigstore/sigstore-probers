@@ -333,9 +333,9 @@ jobs:
         if: success() || failure()
         run: |
           if [ "${{ inputs.trigger_pager_duty_test }}" == "true" ]; then
-            echo "summary=Test Notification" >> $GITHUB_OUTPUT
+            echo "summary=GitHub Prober Test Notification" >> $GITHUB_OUTPUT
           else
-            echo "summary=Prober Failed" >> $GITHUB_OUTPUT
+            echo "summary=GitHub Prober Failed" >> $GITHUB_OUTPUT
           fi
           echo "group=production" >> $GITHUB_OUTPUT
           if [ ${{ inputs.enable_staging }} == 'true' ]; then
