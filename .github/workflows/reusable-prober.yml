@@ -185,7 +185,7 @@ jobs:
       - name: Build and copy a container image
         run: |
           docker pull ghcr.io/linuxcontainers/alpine
-          docker tag ghcr.io/linuxcontainers/alpine ${IMAGE}
+          docker build --label "prober-run-id=$(uuidgen)" --tag ${IMAGE} - <<< "FROM ghcr.io/linuxcontainers/alpine"
           docker push ${IMAGE}
 
       - name: Initialize TUF root
