@@ -1,6 +1,6 @@
 ARG TOOLS_DIR="/go/tools"
 
-FROM golang:1.26.2-alpine@sha256:1fb7391fd54a953f15205f2cfe71ba48ad358c381d4e2efcd820bfca921cd6c6 AS go-builder
+FROM golang:1.26.2-alpine@sha256:f85330846cde1e57ca9ec309382da3b8e6ae3ab943d2739500e08c86393a21b1 AS go-builder
 ARG TOOLS_DIR
 
 RUN mkdir ${TOOLS_DIR}
