@@ -253,7 +253,7 @@ func main() {
 
 	rekorV1Services, err := root.SelectServices(signingConfig.RekorLogURLs(), root.ServiceConfiguration{Selector: prototrustroot.ServiceSelector_ALL}, []uint32{1}, time.Now())
 	if err != nil {
-		log.Fatal("Failed to select Rekor v1 services: ", err)
+		rekorV1Services = nil
 	}
 
 	var rekorV2Services []root.Service
