@@ -5,15 +5,15 @@ go 1.26.0
 require (
 	github.com/google/certificate-transparency-go v1.3.3
 	github.com/hashicorp/go-retryablehttp v0.7.8
-	github.com/sigstore/sigstore v1.10.6
+	github.com/sigstore/sigstore v1.10.7
 	github.com/transparency-dev/formats v0.1.0
 )
 
 require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/secure-systems-lab/go-securesystemslib v0.10.0 // indirect
-	golang.org/x/crypto v0.48.0 // indirect
+	github.com/secure-systems-lab/go-securesystemslib v0.11.0 // indirect
+	golang.org/x/crypto v0.50.0 // indirect
 	golang.org/x/mod v0.32.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
-	golang.org/x/term v0.40.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/term v0.42.0 // indirect
 )
