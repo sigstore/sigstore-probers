@@ -70,7 +70,7 @@ jobs:
 
       - name: lint pager-duty
         if: steps.changes.outputs.tools == 'true'
-        uses: golangci/golangci-lint-action@82606bf257cbaff209d206a39f5134f0cfbfd2ee # v9.2.1
+        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
           working-directory: pager-duty
 
@@ -80,7 +80,7 @@ jobs:
 
       - name: build probers
         if: steps.changes.outputs.tools == 'true'
-        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .
           push: false
