@@ -67,6 +67,12 @@ MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEv8+Fp+klTMlOd0FU+eekotPzlaF9
 orvv9ZgdLXq5+MmoGThLNigXIapXjW0lujsU6+ZHKZ6UPzSuz+V8YxLoQw==
 -----END PUBLIC KEY-----`
 
+// log2026-1.us-east4.ctfe.sigstage.dev
+const ctStagingLog2026_1UsEast_4 = `-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEa5Gw4tcbYtTUdKWLy6ovCgWUb0gg
+ekCaMyVpw5RCxBKKbJpahWdRX4ArH3N/wtakd2qDmtjsFVV1jMw5cHbmGw==
+-----END PUBLIC KEY-----`
+
 type shardInfo struct {
 	url                 string
 	key                 string
@@ -110,6 +116,13 @@ var envToShardInfo = map[string]map[string]shardInfo{
 			url:                 "https://log2026-1.ctfe.sigstage.dev",
 			origin:              "log2026-1.ctfe.sigstage.dev",
 			key:                 ctStagingLog2026_1,
+			checkpointEndpoint:  "checkpoint",
+			writeHealthEndpoint: "ct/v1/get-roots",
+		},
+		"log2026-1-us-east4": shardInfo{
+			url:                 "https://log2026-1.us-east4.ctfe.sigstage.dev",
+			origin:              "log2026-1.us-east4.ctfe.sigstage.dev",
+			key:                 ctStagingLog2026_1UsEast_4,
 			checkpointEndpoint:  "checkpoint",
 			writeHealthEndpoint: "ct/v1/get-roots",
 		},
