@@ -16,7 +16,6 @@ package main
 
 import (
 	"context"
-	"crypto"
 	"crypto/ed25519"
 	"flag"
 	"fmt"
@@ -47,17 +46,30 @@ func main() {
 		slog.Error(err.Error())
 		os.Exit(1)
 	}
-	urls, err := selectRekorURLs(signingConfig)
-	if err != nil {
-		slog.Error(err.Error())
-		os.Exit(1)
+
+	v1URLs := make(map[string]bool)
+	for _, svc := range signingConfig.RekorLogURLs() {
+		if svc.MajorAPIVersion == 1 {
+			v1URLs[svc.URL] = true
+		}
 	}
 
 	eg, ctx := errgroup.WithContext(ctx)
 
-	for _, u := range urls {
+	for _, tlog := range trustedRoot.RekorLogs() {
+		if v1URLs[tlog.BaseURL] {
+			slog.Debug("Skipping Rekor V1 log", "url", tlog.BaseURL)
+			continue
+		}
+
+		u, err := url.Parse(tlog.BaseURL)
+		if err != nil {
+			slog.Error("Failed to parse Rekor log URL", "url", tlog.BaseURL, "error", err)
+			os.Exit(1)
+		}
+
 		eg.Go(func() error {
-			verifier, err := verifierForOrigin(trustedRoot, u)
+			verifier, err := verifierForLog(tlog, u)
 			if err != nil {
 				return err
 			}
@@ -102,35 +114,8 @@ func downloadTUFMaterials(staging bool) (*root.TrustedRoot, *root.SigningConfig,
 	return trustedRoot, signingConfig, nil
 }
 
-func selectRekorURLs(signingConfig *root.SigningConfig) ([]*url.URL, error) {
-	const rekorVersion = uint32(2)
-	services := signingConfig.RekorLogURLs()
-	urls := make([]*url.URL, 0)
-	for _, svc := range services {
-		if svc.MajorAPIVersion == rekorVersion {
-			u, err := url.Parse(svc.URL)
-			if err != nil {
-				return nil, fmt.Errorf("parsing log URL: %w", err)
-			}
-			urls = append(urls, u)
-		}
-	}
-	return urls, nil
-}
-
-func verifierForOrigin(trustedRoot *root.TrustedRoot, u *url.URL) (note.Verifier, error) {
-	tlogs := trustedRoot.RekorLogs()
-	var pubKey crypto.PublicKey
-	baseURL := u.String()
-	for _, tlog := range tlogs {
-		if tlog.BaseURL == baseURL {
-			pubKey = tlog.PublicKey
-			break
-		}
-	}
-	if pubKey == nil {
-		return nil, fmt.Errorf("could not find key for URL [%s]", baseURL)
-	}
+func verifierForLog(tlog *root.TransparencyLog, u *url.URL) (note.Verifier, error) {
+	pubKey := tlog.PublicKey
 	origin := u.Hostname()
 	var noteKey string
 	var err error
