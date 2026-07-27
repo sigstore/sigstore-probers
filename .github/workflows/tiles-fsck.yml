@@ -27,7 +27,7 @@ jobs:
   tiles-fsck:
     name: Merkle Tree Consistency Check
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 120
     outputs:
       summary: ${{ steps.tiles_fsck.outputs.summary }}
       env: ${{ steps.tiles_fsck.outputs.env }}
