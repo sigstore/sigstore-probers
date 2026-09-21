@@ -101,7 +101,7 @@ jobs:
         run: cp "${{ inputs.tuf_root_path }}" ./root.json
 
       - name: Verify TUF repository state
-        uses: theupdateframework/tuf-on-ci/actions/test-repository@4e63a5934064216b7caa7a4a833b1b0936bec660 # v0.20.0
+        uses: theupdateframework/tuf-on-ci/actions/test-repository@662382a8295b89a9d538390ce8b9bb85b207a93d # v0.21.0
         with:
           metadata_url: ${{ inputs.tuf_repo }}
           valid_days: 2
