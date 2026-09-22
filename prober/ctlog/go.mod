@@ -5,7 +5,7 @@ go 1.27.0
 require (
 	github.com/google/certificate-transparency-go v1.3.3
 	github.com/hashicorp/go-retryablehttp v0.7.8
-	github.com/sigstore/sigstore v1.10.10
+	github.com/sigstore/sigstore v1.11.0
 	github.com/transparency-dev/formats v0.1.1
 )
 
