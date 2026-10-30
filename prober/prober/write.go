@@ -19,9 +19,11 @@ import (
 	"context"
 	"crypto"
 	"crypto/ecdsa"
+	"crypto/mldsa"
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
@@ -29,6 +31,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/digitorus/timestamp"
@@ -45,12 +49,18 @@ import (
 	common "github.com/sigstore/protobuf-specs/gen/pb-go/common/v1"
 	rekor "github.com/sigstore/protobuf-specs/gen/pb-go/rekor/v1"
 	"github.com/sigstore/rekor-tiles/v2/pkg/generated/protobuf"
+	rekornote "github.com/sigstore/rekor-tiles/v2/pkg/note"
+	"github.com/sigstore/rekor-tiles/v2/pkg/types/identity_v1"
+	"github.com/sigstore/rekor-tiles/v2/pkg/verify"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	hashedrekord "github.com/sigstore/rekor/pkg/types/hashedrekord/v0.0.1"
 	"github.com/sigstore/sigstore-go/pkg/root"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/sigstore/sigstore/pkg/oauthflow"
 	"github.com/sigstore/sigstore/pkg/signature"
+	"github.com/transparency-dev/formats/proof"
+	merkleproof "github.com/transparency-dev/merkle/proof"
+	"github.com/transparency-dev/merkle/rfc6962"
 
 	// Loads OIDC providers
 	"github.com/sigstore/cosign/v3/pkg/providers/all"
@@ -400,7 +410,7 @@ func rekorV2WriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecd
 			},
 		}
 	} else {
-		pubBytes, err := cryptoutils.MarshalPublicKeyToDER(priv.Public())
+		pubBytes, err := x509.MarshalPKIXPublicKey(priv.Public())
 		if err != nil {
 			return err
 		}
@@ -463,6 +473,245 @@ func rekorV2WriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecd
 		return nil
 	}
 	return lastErr
+}
+
+// rekorIdentityWriteEndpoint tests the write endpoint for a Rekor Identity log
+// (/api/v2/log/entries) using both PublicKeyCredential (ML-DSA-44) and OidcCredential.
+func rekorIdentityWriteEndpoint(ctx context.Context, rekorIdentityServices []root.Service, pqcTrustedRoot *root.TrustedRoot) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := rekorIdentityPublicKeyWrite(ctx, rekorIdentityServices, pqcTrustedRoot); err != nil {
+		return fmt.Errorf("public key credential write: %w", err)
+	}
+	if err := rekorIdentityOIDCWrite(ctx, rekorIdentityServices, pqcTrustedRoot); err != nil {
+		return fmt.Errorf("oidc credential write: %w", err)
+	}
+	return nil
+}
+
+func rekorIdentityPublicKeyWrite(ctx context.Context, rekorIdentityServices []root.Service, pqcTrustedRoot *root.TrustedRoot) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	priv, err := mldsa.GenerateKey(mldsa.MLDSA44())
+	if err != nil {
+		return fmt.Errorf("generating ML-DSA-44 key: %w", err)
+	}
+	pubBytes, err := x509.MarshalPKIXPublicKey(priv.PublicKey())
+	if err != nil {
+		return fmt.Errorf("marshalling ML-DSA-44 public key: %w", err)
+	}
+
+	artifact := make([]byte, 32)
+	if _, err := rand.Read(artifact); err != nil {
+		return fmt.Errorf("generating random artifact: %w", err)
+	}
+	msgHash := sha256.Sum256(artifact)
+	contextKey := sha256.Sum256([]byte(identity_v1.ContextKeyName))
+	contextVal := sha256.Sum256([]byte("prober-context"))
+
+	payload := []byte(identity_v1.SpecDomainSeparator + "\x00")
+	msgDoubleHash := sha256.Sum256(msgHash[:])
+	payload = append(payload, msgDoubleHash[:]...)
+	keyDoubleHash := sha256.Sum256(contextKey[:])
+	valDoubleHash := sha256.Sum256(contextVal[:])
+	payload = append(payload, keyDoubleHash[:]...)
+	payload = append(payload, valDoubleHash[:]...)
+
+	sig, err := priv.Sign(nil, payload, nil)
+	if err != nil {
+		return fmt.Errorf("signing identity payload: %w", err)
+	}
+
+	req := &protobuf.IdentityRequestV001{
+		Credential: &protobuf.IdentityRequestV001_PublicKey{
+			PublicKey: &protobuf.PublicKeyCredential{
+				PublicKey: pubBytes,
+				Signature: sig,
+				Context:   contextVal[:],
+			},
+		},
+		Message: msgHash[:],
+	}
+	reqBytes, err := protojson.Marshal(req)
+	if err != nil {
+		return err
+	}
+
+	proberCheck := ReadProberCheck{
+		Endpoint: rekorV2Endpoint,
+		Method:   POST,
+		Body:     reqBytes,
+		Accept:   "text/plain",
+	}
+	expectedExtraData := fmt.Sprintf("%s:%s", identity_v1.ContextKeyName, base64.StdEncoding.EncodeToString(contextVal[:]))
+	entryHash, err := identity_v1.ToEntryHash(pubBytes, sig, msgHash[:], contextVal[:])
+	if err != nil {
+		return fmt.Errorf("computing entry hash: %w", err)
+	}
+
+	var lastErr error
+	for _, s := range rekorIdentityServices {
+		respBytes, err := observeRequest(s.URL, proberCheck)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		var pr proof.TLogProof
+		if err := pr.Unmarshal(respBytes); err != nil {
+			lastErr = fmt.Errorf("unmarshalling tlog proof: %w", err)
+			continue
+		}
+		if !bytes.Equal(pr.ExtraData, []byte(expectedExtraData)) {
+			lastErr = fmt.Errorf("tlog proof extraData does not match: got %q, want %q", pr.ExtraData, expectedExtraData)
+			continue
+		}
+		if err := verifyRekorIdentityProof(pr, entryHash, pqcTrustedRoot); err != nil {
+			lastErr = fmt.Errorf("verifying tlog proof: %w", err)
+			continue
+		}
+		return nil
+	}
+	return lastErr
+}
+
+func rekorIdentityOIDCWrite(ctx context.Context, rekorIdentityServices []root.Service, pqcTrustedRoot *root.TrustedRoot) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if !all.Enabled(ctx) {
+		return fmt.Errorf("no auth provider for rekor identity is enabled")
+	}
+	tok, err := providers.Provide(ctx, "sigstore")
+	if err != nil {
+		return fmt.Errorf("getting provider: %w", err)
+	}
+
+	artifact := make([]byte, 32)
+	if _, err := rand.Read(artifact); err != nil {
+		return fmt.Errorf("generating random artifact: %w", err)
+	}
+	msgHash := sha256.Sum256(artifact)
+
+	req := &protobuf.IdentityRequestV001{
+		Credential: &protobuf.IdentityRequestV001_Oidc{
+			Oidc: &protobuf.OidcCredential{
+				Token: tok,
+			},
+		},
+		Message: msgHash[:],
+	}
+	reqBytes, err := protojson.Marshal(req)
+	if err != nil {
+		return err
+	}
+
+	proberCheck := ReadProberCheck{
+		Endpoint: rekorV2Endpoint,
+		Method:   POST,
+		Body:     reqBytes,
+		Accept:   "text/plain",
+	}
+
+	var lastErr error
+	for _, s := range rekorIdentityServices {
+		respBytes, err := observeRequest(s.URL, proberCheck)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		var pr proof.TLogProof
+		if err := pr.Unmarshal(respBytes); err != nil {
+			lastErr = fmt.Errorf("unmarshalling tlog proof: %w", err)
+			continue
+		}
+		if !bytes.Contains(pr.ExtraData, []byte("issuer:")) || !bytes.Contains(pr.ExtraData, []byte("subject:")) {
+			lastErr = fmt.Errorf("tlog proof extraData missing expected OIDC claims: got %q", pr.ExtraData)
+			continue
+		}
+		claims, err := parseOIDCClaimsFromExtraData(pr.ExtraData)
+		if err != nil {
+			lastErr = fmt.Errorf("parsing OIDC claims from extraData: %w", err)
+			continue
+		}
+		entryHash, err := identity_v1.ToOIDCEntryHash(msgHash[:], claims)
+		if err != nil {
+			lastErr = fmt.Errorf("computing OIDC entry hash: %w", err)
+			continue
+		}
+		if err := verifyRekorIdentityProof(pr, entryHash, pqcTrustedRoot); err != nil {
+			lastErr = fmt.Errorf("verifying tlog proof: %w", err)
+			continue
+		}
+		return nil
+	}
+	return lastErr
+}
+
+func parseOIDCClaimsFromExtraData(extraData []byte) (map[string]string, error) {
+	lines := strings.Split(strings.TrimSpace(string(extraData)), "\n")
+	claims := make(map[string]string, len(lines))
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		key, encodedVal, ok := strings.Cut(line, ":")
+		if !ok {
+			return nil, fmt.Errorf("invalid extraData line %q", line)
+		}
+		val, err := base64.StdEncoding.DecodeString(encodedVal)
+		if err != nil {
+			return nil, fmt.Errorf("decoding claim %q value: %w", key, err)
+		}
+		claims[key] = string(val)
+	}
+	return claims, nil
+}
+
+func verifyRekorIdentityProof(pr proof.TLogProof, entryHash []byte, pqcTrustedRoot *root.TrustedRoot) error {
+	if pqcTrustedRoot == nil {
+		return errors.New("pqc trusted root is required to verify tlog proof")
+	}
+
+	hashes := make([][]byte, len(pr.Hashes))
+	for i := range pr.Hashes {
+		hashes[i] = pr.Hashes[i][:]
+	}
+
+	var lastErr error
+	for _, tlog := range pqcTrustedRoot.RekorLogs() {
+		u, err := url.Parse(tlog.BaseURL)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		sigVerifier, err := signature.LoadDefaultVerifier(tlog.PublicKey)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		noteVerifier, err := rekornote.NewNoteVerifier(u.Hostname(), sigVerifier)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		cp, err := verify.VerifyCheckpoint(string(pr.Checkpoint), noteVerifier)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		if err := merkleproof.VerifyInclusion(rfc6962.DefaultHasher, pr.Index, cp.Size, entryHash, hashes, cp.Hash); err != nil {
+			lastErr = fmt.Errorf("verifying inclusion proof: %w", err)
+			continue
+		}
+		return nil
+	}
+	if lastErr != nil {
+		return lastErr
+	}
+	return errors.New("no rekor logs in pqc trusted root")
 }
 
 func tsaWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey, tsaServices []root.Service, trustedRoot *root.TrustedRoot) error {

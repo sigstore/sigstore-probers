@@ -17,10 +17,14 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/tls"
+	"crypto/x509"
+	_ "embed"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -53,6 +57,11 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
+
+// TODO: Remove once the PQC TUF root is embedded in sigstore-go.
+//
+//go:embed 1.root.json
+var pqcRoot []byte
 
 var retryableClient *retryablehttp.Client
 
@@ -121,9 +130,11 @@ func encodeLevel() zapcore.LevelEncoder {
 }
 
 var (
-	scPath  string
-	trPath  string
-	staging bool
+	scPath    string
+	trPath    string
+	pqcScPath string
+	pqcTrPath string
+	staging   bool
 
 	frequency   int
 	logStyle    string
@@ -145,6 +156,8 @@ type attemptCtxKey string
 func init() {
 	flag.StringVar(&scPath, "signing-config", "", "Path to the signing config")
 	flag.StringVar(&trPath, "trusted-root", "", "Path to the trusted root")
+	flag.StringVar(&pqcScPath, "pqc-signing-config", "", "Path to the PQC signing config (contains only PQC Rekor instances)")
+	flag.StringVar(&pqcTrPath, "pqc-trusted-root", "", "Path to the PQC trusted root")
 
 	flag.BoolVar(&staging, "staging", false, "Whether to use the public instance staging environment (otherwise use the public instance production environment). For private deployments, use the signing-config and trusted-root flags.")
 
@@ -251,6 +264,47 @@ func main() {
 		log.Fatal("Must specify both --signing-config and --trusted-root, or neither")
 	}
 
+	var pqcSigningConfig *root.SigningConfig
+	var pqcTrustedRoot *root.TrustedRoot
+	switch {
+	case pqcScPath != "" && pqcTrPath != "":
+		pqcSigningConfig, err = root.NewSigningConfigFromPath(pqcScPath)
+		if err != nil {
+			log.Fatal("Failed to load PQC signing config: ", err)
+		}
+		pqcTrBytes, err := os.ReadFile(pqcTrPath)
+		if err != nil {
+			log.Fatal("Failed to read PQC trusted root: ", err)
+		}
+		pqcTrustedRoot, err = newPQCTrustedRootFromJSON(pqcTrBytes)
+		if err != nil {
+			log.Fatal("Failed to load PQC trusted root: ", err)
+		}
+	case pqcScPath == "" && pqcTrPath == "":
+		// TODO: Fetch from the production PQC TUF repository once available.
+		if staging && scPath == "" && trPath == "" {
+			pqcOpts := tuf.DefaultOptions().WithRepositoryBaseURL("https://tuf.v2.sigstage.dev/").WithRoot(pqcRoot)
+			pqcClient, err := tuf.New(pqcOpts)
+			if err != nil {
+				log.Fatal("Failed to create staging PQC TUF client: ", err)
+			}
+			pqcSigningConfig, err = root.GetSigningConfig(pqcClient)
+			if err != nil {
+				log.Fatal("Failed to fetch staging PQC signing config: ", err)
+			}
+			pqcTrBytes, err := pqcClient.GetTarget("trusted_root.json")
+			if err != nil {
+				log.Fatal("Failed to fetch staging PQC trusted root: ", err)
+			}
+			pqcTrustedRoot, err = newPQCTrustedRootFromJSON(pqcTrBytes)
+			if err != nil {
+				log.Fatal("Failed to parse staging PQC trusted root: ", err)
+			}
+		}
+	default:
+		log.Fatal("Must specify both --pqc-signing-config and --pqc-trusted-root, or neither")
+	}
+
 	rekorV1Services, err := root.SelectServices(signingConfig.RekorLogURLs(), root.ServiceConfiguration{Selector: prototrustroot.ServiceSelector_ALL}, []uint32{1}, time.Now())
 	if err != nil {
 		rekorV1Services = nil
@@ -263,6 +317,14 @@ func main() {
 		rekorV2Services, err = root.SelectServices(signingConfig.RekorLogURLs(), root.ServiceConfiguration{Selector: prototrustroot.ServiceSelector_ALL}, []uint32{2}, time.Now())
 		if err != nil {
 			rekorV2Services = nil
+		}
+	}
+
+	var rekorIdentityServices []root.Service
+	if pqcSigningConfig != nil {
+		rekorIdentityServices, err = root.SelectServices(pqcSigningConfig.RekorLogURLs(), root.ServiceConfiguration{Selector: prototrustroot.ServiceSelector_ALL}, []uint32{2}, time.Now())
+		if err != nil {
+			rekorIdentityServices = nil
 		}
 	}
 
@@ -298,7 +360,7 @@ func main() {
 			Logger.Fatalf("error creating fulcio grpc client %v", err)
 		}
 	}
-	go runProbers(ctx, frequency, oneTime, fulcioClient, rekorV1Services, rekorV2Services, fulcioService, fulcioGrpcURL, tsaServices, trustedRoot)
+	go runProbers(ctx, frequency, oneTime, fulcioClient, rekorV1Services, rekorV2Services, rekorIdentityServices, fulcioService, fulcioGrpcURL, tsaServices, trustedRoot, pqcTrustedRoot)
 	// Expose the registered metrics via HTTP.
 	http.Handle("/metrics", promhttp.HandlerFor(
 		reg,
@@ -334,7 +396,7 @@ func NewFulcioGrpcClient(fulcioGrpcURL string) (fulciopb.CAClient, error) {
 	return fulciopb.NewCAClient(conn), nil
 }
 
-func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fulciopb.CAClient, rekorV1Services []root.Service, rekorV2Services []root.Service, fulcioService root.Service, fulcioGrpcURL string, tsaServices []root.Service, trustedRoot *root.TrustedRoot) {
+func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fulciopb.CAClient, rekorV1Services []root.Service, rekorV2Services []root.Service, rekorIdentityServices []root.Service, fulcioService root.Service, fulcioGrpcURL string, tsaServices []root.Service, trustedRoot *root.TrustedRoot, pqcTrustedRoot *root.TrustedRoot) {
 	for {
 		hasErr := false
 
@@ -365,6 +427,15 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 		}
 
 		for _, s := range rekorV2Services {
+			for _, r := range RekorV2ReadEndpoints {
+				if _, err := observeRequest(s.URL, r); err != nil {
+					hasErr = true
+					Logger.Errorf("error running request %s: %v", r.Endpoint, err)
+				}
+			}
+		}
+
+		for _, s := range rekorIdentityServices {
 			for _, r := range RekorV2ReadEndpoints {
 				if _, err := observeRequest(s.URL, r); err != nil {
 					hasErr = true
@@ -425,6 +496,12 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 				if err := rekorV2WriteEndpoint(ctx, cert, priv, rekorV2Services); err != nil {
 					hasErr = true
 					Logger.Errorf("error running rekor v2 write prober: %v", err)
+				}
+			}
+			if len(rekorIdentityServices) > 0 {
+				if err := rekorIdentityWriteEndpoint(ctx, rekorIdentityServices, pqcTrustedRoot); err != nil {
+					hasErr = true
+					Logger.Errorf("error running rekor identity write prober: %v", err)
 				}
 			}
 		}
@@ -563,3 +640,29 @@ func determineRekorShardCoverage(rekorURL string) ([]ReadProberCheck, *LogInfo, 
 
 	return shardSpecificEndpoints, &logInfo, nil
 }
+
+// TODO: Replace with root.NewTrustedRootFromJSON once sigstore-go supports ML-DSA tlog keys.
+func newPQCTrustedRootFromJSON(rootJSON []byte) (*root.TrustedRoot, error) {
+	if tr, err := root.NewTrustedRootFromJSON(rootJSON); err == nil {
+		return tr, nil
+	}
+	pbTrustedRoot, err := root.NewTrustedRootProtobuf(rootJSON)
+	if err != nil {
+		return nil, err
+	}
+	tlogs := make(map[string]*root.TransparencyLog, len(pbTrustedRoot.GetTlogs()))
+	for _, tlog := range pbTrustedRoot.GetTlogs() {
+		pubKey, err := x509.ParsePKIXPublicKey(tlog.GetPublicKey().GetRawBytes())
+		if err != nil {
+			return nil, fmt.Errorf("parsing tlog public key for %s: %w", tlog.GetBaseUrl(), err)
+		}
+		tlogs[hex.EncodeToString(tlog.GetLogId().GetKeyId())] = &root.TransparencyLog{
+			BaseURL:   tlog.GetBaseUrl(),
+			ID:        tlog.GetLogId().GetKeyId(),
+			HashFunc:  crypto.SHA256,
+			PublicKey: pubKey,
+		}
+	}
+	return root.NewTrustedRoot(pbTrustedRoot.GetMediaType(), nil, nil, nil, tlogs)
+}
+
