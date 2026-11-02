@@ -33,29 +33,37 @@ func main() {
 	var err error
 
 	var signingConfig *root.SigningConfig
+	var rekorV2SigningConfig *root.SigningConfig
 	if scPath != "" {
 		signingConfig, err = root.NewSigningConfigFromPath(scPath)
 		if err != nil {
 			log.Fatal("Failed to load signing config: ", err)
 		}
+		rekorV2SigningConfig = signingConfig
 	} else {
+		opts := tuf.DefaultOptions()
 		if staging {
-			opts := tuf.DefaultOptions()
-			opts.Root = tuf.StagingRoot()
-			opts.RepositoryBaseURL = tuf.StagingMirror
-			signingConfig, err = root.FetchSigningConfigWithOptions(opts)
-			if err != nil {
-				log.Fatal("Failed to fetch staging signing config: ", err)
-			}
-		} else {
-			signingConfig, err = root.FetchSigningConfig()
-			if err != nil {
-				log.Fatal("Failed to fetch prod signing config: ", err)
-			}
+			opts = opts.WithRoot(tuf.StagingRoot()).WithRepositoryBaseURL(tuf.StagingMirror)
+		}
+		client, err := tuf.New(opts)
+		if err != nil {
+			log.Fatal("Failed to create TUF client: ", err)
+		}
+		signingConfig, err = root.GetSigningConfig(client)
+		if err != nil {
+			log.Fatal("Failed to fetch signing config: ", err)
+		}
+		rekorV2SCBytes, err := client.GetTarget("signing_config_rekor_v2.v0.2.json")
+		if err != nil {
+			log.Fatal("Failed to fetch Rekor v2 signing config: ", err)
+		}
+		rekorV2SigningConfig, err = root.NewSigningConfigFromJSON(rekorV2SCBytes)
+		if err != nil {
+			log.Fatal("Failed to parse Rekor v2 signing config: ", err)
 		}
 	}
 
-	urls, err := getURLsFromSigningConfig(signingConfig)
+	urls, err := getURLsFromSigningConfig(signingConfig, rekorV2SigningConfig)
 	if err != nil {
 		log.Fatal("Failed to get URLs from signing config: ", err)
 	}
@@ -86,25 +94,18 @@ func main() {
 	fmt.Println("Successfully triggered rate limiting on all targets.")
 }
 
-func getURLsFromSigningConfig(sc *root.SigningConfig) ([]string, error) {
+func getURLsFromSigningConfig(sc, rekorV2SC *root.SigningConfig) ([]string, error) {
 	rekorV1Service, err := root.SelectService(sc.RekorLogURLs(), []uint32{1}, time.Now())
 	if err != nil {
 		return nil, fmt.Errorf("failed to select Rekor v1 service: %w", err)
 	}
 	rekorV1URL := rekorV1Service.URL + "/api/v1/log"
 
-	var rekorV2URL string
-	rekorV2Service, err := root.SelectService(sc.RekorLogURLs(), []uint32{2}, time.Now())
+	rekorV2Service, err := root.SelectService(rekorV2SC.RekorLogURLs(), []uint32{2}, time.Now())
 	if err != nil {
-		// Hardcode Rekor v2 URL in prod until available in signing config
-		if !staging {
-			rekorV2URL = "https://log2025-1.rekor.sigstore.dev/healthz"
-		} else {
-			return nil, fmt.Errorf("failed to select Rekor v2 service for staging: %w", err)
-		}
-	} else {
-		rekorV2URL = rekorV2Service.URL + "/healthz"
+		return nil, fmt.Errorf("failed to select Rekor v2 service: %w", err)
 	}
+	rekorV2URL := rekorV2Service.URL + "/healthz"
 
 	fulcioService, err := root.SelectService(sc.FulcioCertificateAuthorityURLs(), []uint32{1}, time.Now())
 	if err != nil {

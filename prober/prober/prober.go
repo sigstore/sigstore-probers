@@ -146,8 +146,6 @@ var (
 	oneTime        bool
 	runWriteProber bool
 
-	rekorV2URL string
-
 	versionInfo version.Info
 )
 
@@ -170,8 +168,6 @@ func init() {
 	flag.UintVar(&retries, "retry", 4, "Maximum number of retries before marking HTTP request as failed")
 	flag.BoolVar(&oneTime, "one-time", false, "Whether to run only one time and exit")
 	flag.BoolVar(&runWriteProber, "write-prober", false, "Whether to run the probers for the write endpoints")
-
-	flag.StringVar(&rekorV2URL, "rekor-v2-url", "", "Set to the Rekor v2 URL to run probers against (will take precedence over any instances listed in the signing config)")
 
 	var rekorV1RequestsJSON string
 	flag.StringVar(&rekorV1RequestsJSON, "rekor-requests", "[]", "Additional rekor requests (JSON array)")
@@ -226,6 +222,7 @@ func main() {
 	var err error
 
 	var signingConfig *root.SigningConfig
+	var rekorV2SigningConfig *root.SigningConfig
 	var trustedRoot *root.TrustedRoot
 	switch {
 	case scPath != "" && trPath != "":
@@ -233,32 +230,35 @@ func main() {
 		if err != nil {
 			log.Fatal("Failed to load signing config: ", err)
 		}
+		rekorV2SigningConfig = signingConfig
 		trustedRoot, err = root.NewTrustedRootFromPath(trPath)
 		if err != nil {
 			log.Fatal("Failed to load trusted root: ", err)
 		}
 	case scPath == "" && trPath == "":
+		opts := tuf.DefaultOptions()
 		if staging {
-			opts := tuf.DefaultOptions()
-			opts.Root = tuf.StagingRoot()
-			opts.RepositoryBaseURL = tuf.StagingMirror
-			signingConfig, err = root.FetchSigningConfigWithOptions(opts)
-			if err != nil {
-				log.Fatal("Failed to fetch staging signing config: ", err)
-			}
-			trustedRoot, err = root.FetchTrustedRootWithOptions(opts)
-			if err != nil {
-				log.Fatal("Failed to fetch staging trusted root: ", err)
-			}
-		} else {
-			signingConfig, err = root.FetchSigningConfig()
-			if err != nil {
-				log.Fatal("Failed to fetch prod signing config: ", err)
-			}
-			trustedRoot, err = root.FetchTrustedRoot()
-			if err != nil {
-				log.Fatal("Failed to fetch prod trusted root: ", err)
-			}
+			opts = opts.WithRoot(tuf.StagingRoot()).WithRepositoryBaseURL(tuf.StagingMirror)
+		}
+		client, err := tuf.New(opts)
+		if err != nil {
+			log.Fatal("Failed to create TUF client: ", err)
+		}
+		signingConfig, err = root.GetSigningConfig(client)
+		if err != nil {
+			log.Fatal("Failed to fetch signing config: ", err)
+		}
+		rekorV2SCBytes, err := client.GetTarget("signing_config_rekor_v2.v0.2.json")
+		if err != nil {
+			log.Fatal("Failed to fetch Rekor v2 signing config: ", err)
+		}
+		rekorV2SigningConfig, err = root.NewSigningConfigFromJSON(rekorV2SCBytes)
+		if err != nil {
+			log.Fatal("Failed to parse Rekor v2 signing config: ", err)
+		}
+		trustedRoot, err = root.GetTrustedRoot(client)
+		if err != nil {
+			log.Fatal("Failed to fetch trusted root: ", err)
 		}
 	default:
 		log.Fatal("Must specify both --signing-config and --trusted-root, or neither")
@@ -310,14 +310,9 @@ func main() {
 		rekorV1Services = nil
 	}
 
-	var rekorV2Services []root.Service
-	if rekorV2URL != "" {
-		rekorV2Services = []root.Service{{URL: rekorV2URL, MajorAPIVersion: 2}}
-	} else {
-		rekorV2Services, err = root.SelectServices(signingConfig.RekorLogURLs(), root.ServiceConfiguration{Selector: prototrustroot.ServiceSelector_ALL}, []uint32{2}, time.Now())
-		if err != nil {
-			rekorV2Services = nil
-		}
+	rekorV2Services, err := root.SelectServices(rekorV2SigningConfig.RekorLogURLs(), root.ServiceConfiguration{Selector: prototrustroot.ServiceSelector_ALL}, []uint32{2}, time.Now())
+	if err != nil {
+		rekorV2Services = nil
 	}
 
 	var rekorIdentityServices []root.Service

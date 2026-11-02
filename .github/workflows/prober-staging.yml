@@ -7,14 +7,6 @@ on:
         description: 'Trigger PagerDuty as a test'
         required: false
         type: boolean
-      rekor_v2_url:
-        description: '(Optional) Rekor v2 URL'
-        required: false
-        type: string
-      rekor_v2_public_key:
-        description: '(Optional) Rekor v2 Public Key'
-        required: false
-        type: string
   schedule:
     # run every 15 minutes, as often as Github Actions allows
     - cron:  '0/15 * * * *'
@@ -39,8 +31,6 @@ jobs:
       alert_on_failure: false
       # on scheduled runs inputs are null: handle this case
       trigger_pager_duty_test: ${{ inputs.trigger_pager_duty_test == true }}
-      rekor_v2_url: ${{ inputs.rekor_v2_url }}
-      rekor_v2_public_key: ${{ inputs.rekor_v2_public_key }}
 
   wait-on-failure:
     name: Let GitHub take a breath before retrying prober
@@ -67,5 +57,3 @@ jobs:
       tuf_repo: "https://tuf-repo-cdn.sigstage.dev"
       tuf_root_path: ".github/assets/sigstage.root.json"
       alert_on_failure: true
-      rekor_v2_url: ${{ inputs.rekor_v2_url }}
-      rekor_v2_public_key: ${{ inputs.rekor_v2_public_key }}
