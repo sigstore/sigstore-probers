@@ -488,7 +488,7 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 				Logger.Errorf("error running tsa write prober: %v", err)
 			}
 			if len(rekorV2Services) > 0 {
-				if err := rekorV2WriteEndpoint(ctx, cert, priv, rekorV2Services); err != nil {
+				if err := rekorV2WriteEndpoint(ctx, cert, priv, rekorV2Services, trustedRoot); err != nil {
 					hasErr = true
 					Logger.Errorf("error running rekor v2 write prober: %v", err)
 				}
