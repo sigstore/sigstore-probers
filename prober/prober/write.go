@@ -388,7 +388,7 @@ func rekorV1EntryRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey) ([]byte
 // /api/v2/log/entries and adds an entry to the log
 // if a certificate is provided, the Rekor entry will contain that certificate,
 // otherwise the provided key is used
-func rekorV2WriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa.PrivateKey, rekorV2Services []root.Service) error {
+func rekorV2WriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa.PrivateKey, rekorV2Services []root.Service, trustedRoot *root.TrustedRoot) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -444,6 +444,10 @@ func rekorV2WriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecd
 	}
 	var lastErr error
 	for _, rekorV2Service := range rekorV2Services {
+		verified := "false"
+		defer func() {
+			verificationCounter.With(prometheus.Labels{verifiedLabel: verified}).Inc()
+		}()
 		respBytes, err := observeRequest(rekorV2Service.URL, proberCheck)
 		if err != nil {
 			lastErr = err
@@ -459,7 +463,6 @@ func rekorV2WriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecd
 			lastErr = err
 			continue
 		}
-		// basic content matching, without proof or signature verification.
 		tleBodyDigest := tleBody.Spec.GetHashedRekordV002().Data.Digest
 		if !bytes.Equal(tleBodyDigest, digest[:]) {
 			lastErr = fmt.Errorf("tleEntry digest does not match: got: %s, want: %s", tleBodyDigest, digest)
@@ -470,6 +473,32 @@ func rekorV2WriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecd
 			lastErr = fmt.Errorf("tleEntry signature does not match: got: %s, want: %s", tleEntrySig, sig)
 			continue
 		}
+		keyID := hex.EncodeToString(tle.GetLogId().GetKeyId())
+		tlogVerifier, ok := trustedRoot.RekorLogs()[keyID]
+		if !ok {
+			lastErr = fmt.Errorf("rekor log with key ID %s not found in trusted root", keyID)
+			continue
+		}
+		u, err := url.Parse(tlogVerifier.BaseURL)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		sigVerifier, err := signature.LoadDefaultVerifier(tlogVerifier.PublicKey)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		noteVerifier, err := rekornote.NewNoteVerifier(u.Hostname(), sigVerifier)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		if err := verify.VerifyLogEntry(&tle, noteVerifier); err != nil {
+			lastErr = fmt.Errorf("verifying rekor v2 log entry: %w", err)
+			continue
+		}
+		verified = "true"
 		return nil
 	}
 	return lastErr
