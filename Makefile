@@ -13,3 +13,9 @@ release-images:
 .PHONY: sign-release-images
 sign-release-images:
 	echo "Signing prober"; export GIT_HASH=$(GIT_HASH) GIT_VERSION=$(GIT_TAG) ARTIFACT=imagerefs-prober; ./scripts/sign-release-images.sh
+
+.PHONY: tidy
+tidy:
+	find . -name go.mod -execdir go mod tidy \;
+	go work sync
+

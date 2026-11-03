@@ -73,7 +73,7 @@ jobs:
           max_attempts: 3
           retry_wait_seconds: 60
           retry_on: any
-          command: prober --one-time ${{ inputs.enable_staging && '--staging' || '' }}
+          command: prober --one-time --write-prober ${{ inputs.enable_staging && '--staging' || '' }}
 
       - name: Set messages
         id: msg

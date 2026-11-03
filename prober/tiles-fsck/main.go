@@ -16,15 +16,20 @@ package main
 
 import (
 	"context"
-	"crypto/ed25519"
+	"crypto"
+	"crypto/x509"
+	_ "embed"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"log/slog"
 	"net/url"
 	"os"
 
+	rekornote "github.com/sigstore/rekor-tiles/v2/pkg/note"
 	"github.com/sigstore/sigstore-go/pkg/root"
 	"github.com/sigstore/sigstore-go/pkg/tuf"
+	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/transparency-dev/merkle/rfc6962"
 	"github.com/transparency-dev/tessera/api"
 	"github.com/transparency-dev/tessera/client"
@@ -33,15 +38,21 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// TODO: Remove once the PQC TUF root is embedded in sigstore-go.
+//
+//go:embed 1.root.json
+var pqcRoot []byte
+
 var (
 	staging = flag.Bool("staging", false, "Whether to use the staging environment instead of the production environment")
+	pqc     = flag.Bool("pqc", false, "Whether to use the PQC environment")
 )
 
 func main() {
 	flag.Parse()
 	ctx := context.Background()
 
-	trustedRoot, signingConfig, err := downloadTUFMaterials(*staging)
+	trustedRoot, signingConfig, err := downloadTUFMaterials(*staging, *pqc)
 	if err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
@@ -90,9 +101,11 @@ func main() {
 	slog.Info("Finished!")
 }
 
-func downloadTUFMaterials(staging bool) (*root.TrustedRoot, *root.SigningConfig, error) {
+func downloadTUFMaterials(staging, pqc bool) (*root.TrustedRoot, *root.SigningConfig, error) {
 	opts := tuf.DefaultOptions()
-	if staging {
+	if pqc {
+		opts = opts.WithRepositoryBaseURL("https://tuf.v2.sigstage.dev/").WithRoot(pqcRoot)
+	} else if staging {
 		opts = opts.WithRoot(tuf.StagingRoot()).WithRepositoryBaseURL(tuf.StagingMirror)
 	}
 	client, err := tuf.New(opts)
@@ -103,7 +116,7 @@ func downloadTUFMaterials(staging bool) (*root.TrustedRoot, *root.SigningConfig,
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetching trusted root: %w", err)
 	}
-	trustedRoot, err := root.NewTrustedRootFromJSON(trustedRootBytes)
+	trustedRoot, err := newPQCTrustedRootFromJSON(trustedRootBytes)
 	if err != nil {
 		return nil, nil, fmt.Errorf("parsing trusted root: %w", err)
 	}
@@ -114,21 +127,37 @@ func downloadTUFMaterials(staging bool) (*root.TrustedRoot, *root.SigningConfig,
 	return trustedRoot, signingConfig, nil
 }
 
-func verifierForLog(tlog *root.TransparencyLog, u *url.URL) (note.Verifier, error) {
-	pubKey := tlog.PublicKey
-	origin := u.Hostname()
-	var noteKey string
-	var err error
-	switch key := pubKey.(type) {
-	case ed25519.PublicKey:
-		noteKey, err = note.NewEd25519VerifierKey(origin, key)
-		if err != nil {
-			return nil, fmt.Errorf("converting key to note format: %w", err)
-		}
-	default:
-		return nil, fmt.Errorf("unsupported key type %T", key)
+// TODO: Replace with root.NewTrustedRootFromJSON once sigstore-go supports ML-DSA tlog keys.
+func newPQCTrustedRootFromJSON(rootJSON []byte) (*root.TrustedRoot, error) {
+	if tr, err := root.NewTrustedRootFromJSON(rootJSON); err == nil {
+		return tr, nil
 	}
-	verifier, err := note.NewVerifier(noteKey)
+	pbTrustedRoot, err := root.NewTrustedRootProtobuf(rootJSON)
+	if err != nil {
+		return nil, err
+	}
+	tlogs := make(map[string]*root.TransparencyLog, len(pbTrustedRoot.GetTlogs()))
+	for _, tlog := range pbTrustedRoot.GetTlogs() {
+		pubKey, err := x509.ParsePKIXPublicKey(tlog.GetPublicKey().GetRawBytes())
+		if err != nil {
+			return nil, fmt.Errorf("parsing tlog public key for %s: %w", tlog.GetBaseUrl(), err)
+		}
+		tlogs[hex.EncodeToString(tlog.GetLogId().GetKeyId())] = &root.TransparencyLog{
+			BaseURL:   tlog.GetBaseUrl(),
+			ID:        tlog.GetLogId().GetKeyId(),
+			HashFunc:  crypto.SHA256,
+			PublicKey: pubKey,
+		}
+	}
+	return root.NewTrustedRoot(pbTrustedRoot.GetMediaType(), nil, nil, nil, tlogs)
+}
+
+func verifierForLog(tlog *root.TransparencyLog, u *url.URL) (note.Verifier, error) {
+	sigVerifier, err := signature.LoadDefaultVerifier(tlog.PublicKey)
+	if err != nil {
+		return nil, fmt.Errorf("loading verifier for key: %w", err)
+	}
+	verifier, err := rekornote.NewNoteVerifier(u.Hostname(), sigVerifier)
 	if err != nil {
 		return nil, fmt.Errorf("creating verifier for key: %w", err)
 	}
