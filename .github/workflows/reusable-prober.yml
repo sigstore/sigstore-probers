@@ -7,14 +7,6 @@ on:
         description: 'Integration key for PagerDuty'
         required: true
     inputs:
-      rekor_v2_url:
-        required: false
-        type: string
-        description: 'Rekor v2 URL'
-      rekor_v2_public_key:
-        required: false
-        type: string
-        description: 'Rekor v2 Public Key'
       enable_staging:
         required: false
         type: boolean
@@ -143,14 +135,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Validate Rekor v2 inputs
-        if: matrix.version == 'v2'
-        run: |
-          if [[ ('${{ inputs.rekor_v2_url }}' && ! '${{ inputs.rekor_v2_public_key }}') || (! '${{ inputs.rekor_v2_url }}' && '${{ inputs.rekor_v2_public_key }}') ]]; then
-            echo "Error: rekor_v2_url and rekor_v2_public_key must be provided together."
-            exit 1
-          fi
-
       # This server is often down, resulting in a lot of flaky probers
       # If the server is down, and this step fails, we don't alert PagerDuty
       - name: Confirm Github OIDC Server is Available
@@ -206,45 +190,28 @@ jobs:
           echo "These are the contents of the cosign TUF root: "
           ls $TUF_TARGETS_DIR
 
-      - name: Prepare signing config and trusted root
+      - name: Prepare trusted root
         run: |
           TUF_TARGETS_DIR=~/.sigstore/root/$(echo ${{ inputs.tuf_repo }} | sed -e 's#^https://##' -e 's#/$##')/targets
-          cp ${TUF_TARGETS_DIR}/signing_config.v0.2.json ./signing_config.v0.2.json
           cp ${TUF_TARGETS_DIR}/trusted_root.json ./trusted_root.json
 
       - name: Configure signing config for Rekor v1
         if: matrix.version == 'v1'
         run: |
+          TUF_TARGETS_DIR=~/.sigstore/root/$(echo ${{ inputs.tuf_repo }} | sed -e 's#^https://##' -e 's#/$##')/targets
+          cp ${TUF_TARGETS_DIR}/signing_config.v0.2.json ./signing_config.v0.2.json
           # Filter the signing config to only use Rekor v1 services.
           jq '.rekorTlogUrls |= map(select(.majorApiVersion == 1))' signing_config.v0.2.json > signing_config.v0.2.json.tmp && mv signing_config.v0.2.json.tmp signing_config.v0.2.json
 
-      - name: Configure signing config and trusted root for Rekor v2
+      - name: Configure signing config for Rekor v2
         if: matrix.version == 'v2'
         run: |
-          # If a Rekor v2 URL is provided, use it and the provided public key.
-          if [[ -n "${{ inputs.rekor_v2_url }}" ]]; then
-            jq --arg url "${{ inputs.rekor_v2_url }}" '.rekorTlogUrls = [{"url": $url, "majorApiVersion": 2}]' signing_config.v0.2.json > signing_config.v0.2.json.tmp && mv signing_config.v0.2.json.tmp signing_config.v0.2.json
-            # If a Rekor service for the URL is present in the trusted root, error out.
-            if jq -e --arg url "${{ inputs.rekor_v2_url }}" '.tlogs[] | select(.baseUrl == $url)' trusted_root.json > /dev/null; then
-              echo "Error: Rekor service URL ${{ inputs.rekor_v2_url }} already exists in the trusted root."
-              exit 1
-            else
-              # Calculate the key ID according to the C2SP spec for ED25519 signatures: https://github.com/sigstore/rekor-tiles/blob/main/CLIENTS.md#trustedroot-lookup-by-checkpoint-key-id-rather-than-log-id
-              START_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-              KEY_NAME=$(echo "${{ inputs.rekor_v2_url }}" | sed -e 's#^https://##' -e 's#/$##')
-              # tail is used here to strip the 12-byte ASN.1 header from the decoded public key
-              KEY_ID=$( (printf "%s" "$KEY_NAME"; printf "\x0a\x01"; echo -n "${{ inputs.rekor_v2_public_key }}" | base64 -d | tail -c+13) | sha256sum | head -c 64 | xxd -r -p | base64 -w0)
-              jq --arg url "${{ inputs.rekor_v2_url }}" --arg key "${{ inputs.rekor_v2_public_key }}" --arg key_id "$KEY_ID" --arg start_time "$START_TIME" '.tlogs += [{"baseUrl": $url, "hashAlgorithm": "SHA2_256", "publicKey": {"rawBytes": $key, "keyDetails": "PKIX_ED25519", "validFor": {"start": $start_time}}, "logId": {"keyId": $key_id}}]' trusted_root.json > trusted_root.json.tmp && mv trusted_root.json.tmp trusted_root.json
-            fi
-          # If no inputs are provided, use the default behavior for the environment.
-          elif [[ "${{ inputs.enable_staging }}" == "false" ]]; then
-            # Prod: hardcode the latest Rekor v2 shard URL until Rekor v2 is available in the prod signing config.
-            REKOR_V2_URL="https://log2025-1.rekor.sigstore.dev"
-            jq --arg url "$REKOR_V2_URL" '.rekorTlogUrls = [{"url": $url, "majorApiVersion": 2}]' signing_config.v0.2.json > signing_config.v0.2.json.tmp && mv signing_config.v0.2.json.tmp signing_config.v0.2.json
-          else
-            # Staging: filter the signing config to only use Rekor v2 services.
-            jq '.rekorTlogUrls |= map(select(.majorApiVersion == 2))' signing_config.v0.2.json > signing_config.v0.2.json.tmp && mv signing_config.v0.2.json.tmp signing_config.v0.2.json
-          fi
+          TUF_ROOT_DIR=~/.sigstore/root/$(echo ${{ inputs.tuf_repo }} | sed -e 's#^https://##' -e 's#/$##')
+          HASH=$(jq -r '.signed.targets["signing_config_rekor_v2.v0.2.json"].hashes.sha256' ${TUF_ROOT_DIR}/targets.json)
+          curl -fsL "${{ inputs.tuf_repo }}/targets/${HASH}.signing_config_rekor_v2.v0.2.json" -o ./signing_config.v0.2.json
+          echo "${HASH}  ./signing_config.v0.2.json" | sha256sum -c -
+          # Filter the signing config to only use Rekor v2 services.
+          jq '.rekorTlogUrls |= map(select(.majorApiVersion == 2))' signing_config.v0.2.json > signing_config.v0.2.json.tmp && mv signing_config.v0.2.json.tmp signing_config.v0.2.json
 
       - name: Sign and verify the image
         run: |
