@@ -23,7 +23,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
@@ -575,7 +574,7 @@ func rekorIdentityPublicKeyWrite(ctx context.Context, rekorIdentityServices []ro
 		Body:     reqBytes,
 		Accept:   "text/plain",
 	}
-	expectedExtraData := fmt.Sprintf("%s:%s", identity_v1.ContextKeyName, base64.StdEncoding.EncodeToString(contextVal[:]))
+	expectedExtraData := fmt.Sprintf("%s:%s", identity_v1.ContextKeyName, hex.EncodeToString(contextVal[:]))
 	entryHash, err := identity_v1.ToEntryHash(pubBytes, sig, msgHash[:], contextVal[:])
 	if err != nil {
 		return fmt.Errorf("computing entry hash: %w", err)
@@ -686,15 +685,11 @@ func parseOIDCClaimsFromExtraData(extraData []byte) (map[string]string, error) {
 		if line == "" {
 			continue
 		}
-		key, encodedVal, ok := strings.Cut(line, ":")
+		key, val, ok := strings.Cut(line, ":")
 		if !ok {
 			return nil, fmt.Errorf("invalid extraData line %q", line)
 		}
-		val, err := base64.StdEncoding.DecodeString(encodedVal)
-		if err != nil {
-			return nil, fmt.Errorf("decoding claim %q value: %w", key, err)
-		}
-		claims[key] = string(val)
+		claims[key] = val
 	}
 	return claims, nil
 }
