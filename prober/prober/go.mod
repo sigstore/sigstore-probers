@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/prometheus/client_golang v1.25.0
-	github.com/sigstore/cosign/v3 v3.0.4
+	github.com/sigstore/cosign/v3 v3.0.6
 	github.com/sigstore/fulcio v1.9.1
 	github.com/sigstore/protobuf-specs v0.5.2
 	github.com/sigstore/rekor v1.5.5
@@ -61,8 +61,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.7 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.7 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.7 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ecr v1.51.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ecrpublic v1.38.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ecr v1.55.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ecrpublic v1.38.10 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.22 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.7 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.10.5 // indirect
@@ -70,9 +70,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.43.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.51.5 // indirect
 	github.com/aws/smithy-go v1.28.6 // indirect
-	github.com/awslabs/amazon-ecr-credential-helper/ecr-login v0.11.0 // indirect
+	github.com/awslabs/amazon-ecr-credential-helper/ecr-login v0.12.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/buildkite/agent/v3 v3.115.2 // indirect
+	github.com/buildkite/agent/v3 v3.118.0 // indirect
 	github.com/buildkite/go-pipeline v0.16.0 // indirect
 	github.com/buildkite/interpolate v0.1.5 // indirect
 	github.com/buildkite/roko v1.4.0 // indirect
@@ -89,7 +89,7 @@ require (
 	github.com/digitorus/pkcs7 v0.0.0-20260821105541-05f79448fa77 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/docker/cli v29.7.2+incompatible // indirect
-	github.com/docker/docker-credential-helpers v0.9.4 // indirect
+	github.com/docker/docker-credential-helpers v0.9.5 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/fatih/color v1.19.0 // indirect
@@ -187,7 +187,7 @@ require (
 	github.com/tjfoc/gmsm v1.4.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
-	gitlab.com/gitlab-org/api/client-go v1.11.0 // indirect
+	gitlab.com/gitlab-org/api/client-go v1.46.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.72.0 // indirect
 	go.opentelemetry.io/otel v1.47.0 // indirect
