@@ -5,11 +5,12 @@ go 1.27.0
 require (
 	github.com/google/certificate-transparency-go v1.4.0
 	github.com/hashicorp/go-retryablehttp v0.7.8
-	github.com/sigstore/sigstore v1.11.3
+	github.com/sigstore/sigstore v1.11.4
 	github.com/transparency-dev/formats v0.1.1
 )
 
 require (
+	filippo.io/edwards25519 v1.2.0 // indirect
 	filippo.io/mldsa v0.0.0-20260215214346-43d0283efc3e // indirect
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
@@ -17,8 +18,8 @@ require (
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.11.1 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
-	golang.org/x/crypto v0.58.0 // indirect
+	golang.org/x/crypto v0.59.0 // indirect
 	golang.org/x/mod v0.42.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
-	golang.org/x/term v0.47.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
+	golang.org/x/term v0.48.0 // indirect
 )
